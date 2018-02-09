@@ -8,7 +8,7 @@ Proposal for an IRC Event Organiser
 ## Help Commands
 
     <johnbull> slugrat: help
-    <slugrat> Commands: list, show, accept, reject, add, delete, rename, open, close, voters
+    <slugrat> Commands: list, show, accept, reject, add, edit, delete, rename, open, close, voters
     <slugrat> For more details, use: slugrat: help <command>
 
 
