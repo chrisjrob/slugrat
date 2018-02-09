@@ -137,13 +137,13 @@ Proposal for an IRC Event Organiser
     <slugrat> To attend the event, use: slugrat: accept 1 A C D
 
     <johnbull> slugrat: accept 1 A C D
-    <slugrat> johnbull: Thank you, you are able to attend Pub Meet on 2018-02-06 and 2018-02-21.
+    <slugrat> johnbull: Thank you, you are able to attend Pub Meet on 2018-02-06, 2018-02-21 and 2018-02-28.
 
     <janebull> slugrat: accept 1 D
     <slugrat> janebull: Thank you, you are unable to attend Pub Meet on any date.
 
     <fuzzbutt> slugrat: accept 1 A D
-    <slugrat> fuzzbutt: Thank you, you are able to attend Pub Meet on 2018-02-06.
+    <slugrat> fuzzbutt: Thank you, you are able to attend Pub Meet on 2018-02-06 and 2018-02-28.
 
     <majorbull> slugrat: show 1
     <slugrat> A - Pub Meet on 2018-02-06 - 2 votes
