@@ -2,6 +2,8 @@
 
 Proposal for an IRC Event Organiser
 
+** THIS IS A PROPOSAL ONLY - THERE IS NO CODE **
+
 
 ## Help Commands
 
