@@ -175,32 +175,25 @@ Proposal for an IRC Event Organiser
 
 ## Data storage
 
+Possibly data structure format:
+
     $events = {
         '1' = {
             name    = "Pub Meet",
             owner   = 'majorbull',
-            channel = '#surrey',
+            channel = '#chanabc',
             dates   = [
                 '2018-02-13',
             ],
         },        
-    } 
+    }
     
     $votes  = [
         {
             date    => 2018-02-13,
             nick    => 'jilljet',
-            channel => '#surrey',
-            timestamp   => '2018-
+            channel => '#chanabc',
+            timestamp   => '2018-01-09 16.13',
         },
     ]
-    
-    | Event_ID | Name     | Owner     | Channel |
-    |----------|----------|-----------|---------|
-    | 1        | Pub Meet | majorbull | #surrey |
-        
-    | Event_ID | Nick    | Date       |
-    |----------|---------|------------|
-    | 1        | jilljet | 2018-02-13 |
-    
     
