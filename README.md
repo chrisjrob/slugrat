@@ -8,8 +8,7 @@ Proposal for an IRC Event Organiser
 ## Help Commands
 
     <johnbull> slugrat: help
-    <slugrat> User commands: list, show, accept, reject
-    <slugrat> Admin commands: add, delete, rename, open, close, voters
+    <slugrat> Commands: list, show, accept, reject, add, delete, rename, open, close, voters
     <slugrat> For more details, use: slugrat: help <command>
 
 
@@ -33,24 +32,13 @@ Proposal for an IRC Event Organiser
 ### Help Admin Commands
 
     <majorbull> slugrat: help add
-    <slugrat> Sub-commands: event, date
-    <slugrat> For more details, use: slugrat: help add <sub-command>
+    <slugrat> To add an event, use: slugrat: add "Name of event" <ISO Date 1> <ISO Date 2> ...
 
-    <majorbull> slugrat: help add event
-    <slugrat> To add an event, use: slugrat: add event "Name of event" <ISO Date 1> <ISO Date 2> ...
-
-    <majorbull> slugrat: help add date
-    <slugrat> To add a date to an event, please use: slugrat: add date <event number> <ISO Date>
+    <majorbull> slugrat: help edit
+    <slugrat> To edit an event, use: slugrat: edit <event number> <ISO Date 1> <ISO Date 2> ...
 
     <majorbull> slugrat: help delete
-    <slugrat> Sub-commands: event, date
-    <slugrat> For more details, use: slugrat: help delete <sub-command>
-
-    <majorbull> slugrat: help delete event
-    <slugrat> To delete an event, use: slugrat: delete event <event number>
-
-    <majorbull> slugrat: help delete date
-    <slugrat> To delete a date from an event, please use: slugrat: delete date <event number> <ISO Date>
+    <slugrat> To delete an event, use: slugrat: delete <event number>
 
     <majorbull> slugrat: help rename
     <slugrat> To rename an event, use: slugrat: rename <number> "New Name"
@@ -69,7 +57,7 @@ Proposal for an IRC Event Organiser
 
 ### Create an event
 
-    <majorbull> slugrat: add event "Pub Meet" 2018-02-06 2018-02-13 2018-02-21
+    <majorbull> slugrat: add "Pub Meet" 2018-02-06 2018-02-13 2018-02-21
     <slugrat> majorbull: Event 1 "Pub Meet" created successfully
     <slugrat> To open the event, use: slugrat: open 1
 
@@ -119,48 +107,46 @@ Proposal for an IRC Event Organiser
 
 ### Amend dates and re-open event
 
-    <majorbull> slugrat: delete date 1 B
-    <slugrat> Date 2018-02-13 removed from Pub Meet
-
-    <majorbull> slugrat: add date 1 2018-02-28
-    <slugrat> Date 2018-02-28 added to Pub Meet
-
+    <majorbull> slugrat: edit 1 2018-02-06 2018-02-21 2018-02-28
+    <slugrat> majorbull: Event 1 "Pub Meet" edited successfully
+    <slugrat> To open the event, use: slugrat: open 1
+    
     <majorbull> slugrat: show 1
     <slugrat> A - Pub Meet on 2018-02-06 - 2 votes
-    <slugrat> C - Pub Meet on 2018-02-21 - 1 vote
-    <slugrat> D - Pub Meet on 2018-02-28 - 0 votes
+    <slugrat> B - Pub Meet on 2018-02-21 - 1 vote
+    <slugrat> C - Pub Meet on 2018-02-28 - 0 votes
     <slugrat> To open the event, use: slugrat: open 1
 
     <majorbull> slugrat: open 1
     <slugrat> Pub Meet is being organised on one of the following dates:
     <slugrat> A - Pub Meet on 2018-02-06 - 2 votes
-    <slugrat> C - Pub Meet on 2018-02-21 - 1 votes
-    <slugrat> D - Pub Meet on 2018-02-28 - 0 votes
-    <slugrat> To attend the event, use: slugrat: accept 1 A C D
+    <slugrat> B - Pub Meet on 2018-02-21 - 1 votes
+    <slugrat> C - Pub Meet on 2018-02-28 - 0 votes
+    <slugrat> To attend the event, use: slugrat: accept 1 A B C
 
-    <johnbull> slugrat: accept 1 A C D
+    <johnbull> slugrat: accept 1 A B C
     <slugrat> johnbull: Thank you, you are able to attend Pub Meet on 2018-02-06, 2018-02-21 and 2018-02-28.
 
-    <janebull> slugrat: accept 1 D
+    <janebull> slugrat: accept 1 C
     <slugrat> janebull: Thank you, you are able to attend Pub Meet on 2018-02-28.
 
-    <fuzzbutt> slugrat: accept 1 A D
+    <fuzzbutt> slugrat: accept 1 A C
     <slugrat> fuzzbutt: Thank you, you are able to attend Pub Meet on 2018-02-06 and 2018-02-28.
 
     <majorbull> slugrat: show 1
     <slugrat> A - Pub Meet on 2018-02-06 - 2 votes
-    <slugrat> C - Pub Meet on 2018-02-21 - 1 vote
-    <slugrat> D - Pub Meet on 2018-02-28 - 3 votes
-    <slugrat> To attend the event, use: slugrat: accept 1 A C D
+    <slugrat> B - Pub Meet on 2018-02-21 - 1 vote
+    <slugrat> C - Pub Meet on 2018-02-28 - 3 votes
+    <slugrat> To attend the event, use: slugrat: accept 1 A B C
 
     <majorbull> slugrat: close 1
     <slugrat> You have closed event 1 - Pub Meet
     <slugrat> A - Pub Meet on 2018-02-06 - 2 votes
-    <slugrat> C - Pub Meet on 2018-02-21 - 1 vote
-    <slugrat> D - Pub Meet on 2018-02-28 - 3 votes
+    <slugrat> B - Pub Meet on 2018-02-21 - 1 vote
+    <slugrat> C - Pub Meet on 2018-02-28 - 3 votes
     <slugrat> To open the event, use: slugrat: open 1
 
-    <majorbull> slugrat: select 1 D
+    <majorbull> slugrat: select 1 C
     <slugrat> Thank you, you have selected date 2018-02-28 for Pub Meet.
 
 
@@ -187,3 +173,34 @@ Proposal for an IRC Event Organiser
     <slugrat> 4 - Spring Pub Meet - created
     <slugrat> To view detail, use: slugrat: show <event number>
 
+## Data storage
+
+    $events = {
+        '1' = {
+            name    = "Pub Meet",
+            owner   = 'majorbull',
+            channel = '#surrey',
+            dates   = [
+                '2018-02-13',
+            ],
+        },        
+    } 
+    
+    $votes  = [
+        {
+            date    => 2018-02-13,
+            nick    => 'jilljet',
+            channel => '#surrey',
+            timestamp   => '2018-
+        },
+    ]
+    
+    | Event_ID | Name     | Owner     | Channel |
+    |----------|----------|-----------|---------|
+    | 1        | Pub Meet | majorbull | #surrey |
+        
+    | Event_ID | Nick    | Date       |
+    |----------|---------|------------|
+    | 1        | jilljet | 2018-02-13 |
+    
+    
