@@ -29,6 +29,7 @@ use POE::Component::IRC::Plugin::Connector;
 
 use lib './lib';
 use config;
+use events;
 
 use vars qw( $CONF $LAG $REC );
 
@@ -66,7 +67,6 @@ POE::Session->create(
             irc_kick
             irc_botcmd_op
             irc_botcmd_ignore
-            irc_public
         ) ],
     ],
     heap => { irc => $irc },
@@ -114,6 +114,7 @@ sub _start {
     $irc->plugin_add('BotCommand',
         POE::Component::IRC::Plugin::BotCommand->new(
             Commands => {
+                add         => 'To add an event, use: slugrat: add "Name of event" <ISO Date 1> <ISO Date 2> ...',
                 op          => 'Currently has no other purpose than to tell you if you are an op or not!',
                 ignore      => 'Maintain nick ignore list for bots - takes two arguments - add|del|list <nick>',
             },
@@ -201,6 +202,9 @@ sub irc_kick {
     return;
 }
 
+# All this currently does is confirm whether or not you are an op
+# No options
+#
 sub irc_botcmd_op {
     my ($kernel, $who, $channel, $request) = @_[KERNEL, ARG0 .. ARG2];
     my $nick = ( split /!/, $who )[0];
@@ -218,6 +222,9 @@ sub irc_botcmd_op {
 
 }
 
+# Maintains list of bots (or other nicks) to ignore
+# Options are add, delete or list
+#
 sub irc_botcmd_ignore {
     my ($kernel, $who, $channel, $request) = @_[KERNEL, ARG0 .. ARG2];
     my $nick            = ( split /!/, $who )[0];
@@ -250,6 +257,37 @@ sub irc_botcmd_ignore {
     return;
 }
 
+# Add Event
+# <majorbull> slugrat: add "Pub Meet" 2018-02-06 2018-02-13 2018-02-21
+#
+sub irc_botcmd_add {
+    my ($kernel, $who, $channel, $request) = @_[KERNEL, ARG0 .. ARG2];
+    my $nick            = ( split /!/, $who )[0];
+    my ($event, @dates) = split(/\s+/, $request);
+
+    my ($event_id, $event_name) = event::create({
+        CHANNEL         => $channel,
+        NICK            => $nick,
+        EVENT           => $event,
+        DATES           => [@dates],
+    });
+
+    if (defined $event_name) {
+        $irc->yield( privmsg => $channel => "$nick: Event $event_id - $event_name created successfully");
+    } else {
+        $irc->yield( privmsg => $channel => "$nick: Event could not be created - error $event_id");
+    }
+
+    # Restart the lag_o_meter
+    $kernel->delay( 'lag_o_meter' => $LAG );
+
+    return;
+
+}
+
+# Enable the ability to respond to everything, not just pre-defined commands
+# Neater and more predictable to stick to bot commands if possible
+#
 sub irc_public {
     my ($kernel, $sender, $who, $where, $what) = @_[KERNEL, SENDER, ARG0 .. ARG2];
     my $nick = ( split /!/, $who )[0];
