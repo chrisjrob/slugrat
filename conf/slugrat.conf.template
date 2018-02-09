@@ -1,0 +1,22 @@
+# Configuration Template
+
+# IRC
+nickname    "slugrat"
+ircname     "https://github.com/chrisjrob/slugrat"
+server      "irc.freenode.net"
+channels    "#Foo", "#Bar"
+
+# Add a list of bots to be ignored here
+bots        "ircbot1", "ircbot2"
+
+# Command mode
+# Set a suitable command prefix and set addressed to 0
+prefix      '!'
+addressed   0
+
+# Allow commands from a private channel
+private     0
+
+# Automatically accept invitations to other channels
+invites     0
+
