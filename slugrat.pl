@@ -34,7 +34,7 @@ use vars qw( $CONF $LAG $REC );
 if ( (defined $ARGV[0]) and (-r $ARGV[0]) ) {
     $CONF = config::get_config($ARGV[0]);
 } else {
-    print "USAGE: slugrat.pl conf/blitzed.conf\n";
+    print "USAGE: slugrat.pl conf/template.conf\n";
     exit;
 }
 
@@ -64,6 +64,7 @@ POE::Session->create(
             irc_invite
             irc_kick
             irc_botcmd_op
+            irc_botcmd_ignore
             irc_public
         ) ],
     ],
@@ -113,6 +114,7 @@ sub _start {
         POE::Component::IRC::Plugin::BotCommand->new(
             Commands => {
                 op          => 'Currently has no other purpose than to tell you if you are an op or not!',
+                ignore      => 'Maintain nick ignore list for bots - takes two arguments - add|del|list <nick>',
             },
             In_channels     => 1,
             In_private      => $CONF->param('private'),
@@ -215,6 +217,38 @@ sub irc_botcmd_op {
 
 }
 
+sub irc_botcmd_ignore {
+    my ($kernel, $who, $channel, $request) = @_[KERNEL, ARG0 .. ARG2];
+    my $nick            = ( split /!/, $who )[0];
+    my ($action, $bot)  = split(/\s+/, $request);
+
+    unless ( ( is_op($channel, $nick) ) or ($nick eq $bot) ) {
+        $irc->yield( privmsg => $channel => "$nick: Only channel operators may do that!");
+        return;
+    }
+
+    if ((not defined $request) or ($request =~ /^\s*$/)) {
+        $irc->yield( privmsg => $channel => "$nick: Command ignore should be followed by a nick.");
+        return;
+    }
+
+    my $bots;
+    if ($action =~ /^add$/i) {
+        $bots = config::add_bot($CONF, $bot);
+    } elsif ($action =~ /^(?:del|delete|remove)$/i) {
+        $bots = config::remove_bot($CONF, $bot);
+    } else {
+        $bots = config::list_bots($CONF);
+    }
+
+    $irc->yield( privmsg => $channel => "$nick: Bots - $bots");
+
+    # Restart the lag_o_meter
+    $kernel->delay( 'lag_o_meter' => $LAG );
+
+    return;
+}
+
 sub irc_public {
     my ($kernel, $sender, $who, $where, $what) = @_[KERNEL, SENDER, ARG0 .. ARG2];
     my $nick = ( split /!/, $who )[0];
@@ -225,18 +259,18 @@ sub irc_public {
         return;
     }
 
-    # Ignore sluggle: commands - handled by botcommand plugin
+    # Ignore slugrat: commands - handled by botcommand plugin
     my $whoami = $CONF->param('nickname');
     my $prefix = $CONF->param('prefix');
 
     # Cope with commands that are followed only with a space
     # This is a bug I think in botcommand plugin
-    if (my ($command) = $what =~ /^(?:$prefix|$whoami:)\s*(op|help)\s+$/i) {
+    if (my ($command) = $what =~ /^(?:$prefix|$whoami:)\s*(op|ignore|help)\s+$/i) {
         warn "==================================== A ==================================";
         $irc->yield( privmsg => $channel => "$nick: $command followed by whitespace only is invalid.");
 
     # Do nothing - these requests being handled by irc_command_*
-    } elsif ($what =~ /^(?:$prefix|$whoami:)\s*(?:op|help)/i) {
+    } elsif ($what =~ /^(?:$prefix|$whoami:)\s*(?:op|ignore|help)/i) {
         warn "==================================== B ==================================";
 
     }
@@ -250,12 +284,6 @@ sub irc_public {
 # End of IRC Bot Commands
 
 # Start of IRC slave functions
-
-# If response is a Wikipedia link, then do a 
-# Wikimedia lookup instead
-
-# Cannot properly test this function and related mediawiki module 
-# until search api is working
 
 sub is_not_bot {
     my ($object, $nick, $where, $command, $args) = @_;
