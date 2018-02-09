@@ -1,0 +1,2 @@
+# slugrat
+IRC Event Organiser
