@@ -140,7 +140,7 @@ Proposal for an IRC Event Organiser
     <slugrat> johnbull: Thank you, you are able to attend Pub Meet on 2018-02-06, 2018-02-21 and 2018-02-28.
 
     <janebull> slugrat: accept 1 D
-    <slugrat> janebull: Thank you, you are unable to attend Pub Meet on any date.
+    <slugrat> janebull: Thank you, you are able to attend Pub Meet on 2018-02-28.
 
     <fuzzbutt> slugrat: accept 1 A D
     <slugrat> fuzzbutt: Thank you, you are able to attend Pub Meet on 2018-02-06 and 2018-02-28.
