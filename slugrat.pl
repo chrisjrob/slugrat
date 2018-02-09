@@ -28,6 +28,7 @@ use POE::Component::IRC::Plugin::BotCommand;
 use POE::Component::IRC::Plugin::Connector;
 
 use lib './lib';
+use config;
 
 use vars qw( $CONF $LAG $REC );
 
