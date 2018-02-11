@@ -268,7 +268,7 @@ sub irc_botcmd_add {
     my ($event_id, $event_name) = events::create($channel, $nick, $request);
 
     if (defined $event_name) {
-        $irc->yield( privmsg => $channel => "$nick: Event $event_id - $event_name created successfully");
+        $irc->yield( privmsg => $channel => "$nick: $event_name created successfully - ID $event_id");
     } else {
         $irc->yield( privmsg => $channel => "$nick: Event could not be created - error $event_id");
     }
