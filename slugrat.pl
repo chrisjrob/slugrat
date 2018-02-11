@@ -67,6 +67,7 @@ POE::Session->create(
             irc_kick
             irc_botcmd_op
             irc_botcmd_ignore
+            irc_botcmd_add
         ) ],
     ],
     heap => { irc => $irc },
@@ -114,9 +115,9 @@ sub _start {
     $irc->plugin_add('BotCommand',
         POE::Component::IRC::Plugin::BotCommand->new(
             Commands => {
-                add         => 'To add an event, use: slugrat: add "Name of event" <ISO Date 1> <ISO Date 2> ...',
                 op          => 'Currently has no other purpose than to tell you if you are an op or not!',
                 ignore      => 'Maintain nick ignore list for bots - takes two arguments - add|del|list <nick>',
+                add         => 'To add an event, use: slugrat: add "Name of event" <ISO Date 1> <ISO Date 2> ...',
             },
             In_channels     => 1,
             In_private      => $CONF->param('private'),
@@ -263,14 +264,8 @@ sub irc_botcmd_ignore {
 sub irc_botcmd_add {
     my ($kernel, $who, $channel, $request) = @_[KERNEL, ARG0 .. ARG2];
     my $nick            = ( split /!/, $who )[0];
-    my ($event, @dates) = split(/\s+/, $request);
 
-    my ($event_id, $event_name) = event::create({
-        CHANNEL         => $channel,
-        NICK            => $nick,
-        EVENT           => $event,
-        DATES           => [@dates],
-    });
+    my ($event_id, $event_name) = events::create($channel, $nick, $request);
 
     if (defined $event_name) {
         $irc->yield( privmsg => $channel => "$nick: Event $event_id - $event_name created successfully");

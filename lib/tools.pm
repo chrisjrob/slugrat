@@ -24,7 +24,7 @@ sub untaint {
     $tainted =~ s/[^\w\d\-\s()]//g;
 
     # Untaint remainder
-    $tainted = m/^([\w\d\-\s()]+)$/;
+    $tainted =~ m/^([\w\d\-\s()]+)$/;
 
     my $untainted = $1;
 

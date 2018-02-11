@@ -19,46 +19,44 @@ our $EVENTS_FILE = 'events.json';
 our $VOTES_FILE  = 'votes.json';
 
 sub create {
-    my $options_ref = shift;
+    my ($channel, $nick, $request) = @_;
 
-    # CHANNEL => $channel,
-    # NICK    => $nick,
-    # EVENT   => $event,
-    # DATES   => [@dates],
+    use Text::ParseWords;
+    my ($event, @dates) = parse_line(' ', 0, $request);
 
-    my $events_ref  = load_json_from_file($EVENTS_FILE);
+    my $events_ref  = tools::load_json_from_file($EVENTS_FILE);
     my $next_id     = calculate_next_id($events_ref);
 
     my $event_ref = {
-        EVENT   => untaint($options_ref->{EVENT}),
-        OWNER   => $options_ref->{NICK},
-        CHANNEL => $options_ref->{CHANNEL},
-        DATES   => check_dates( $options_ref->{DATES} ),
+        EVENT   => tools::untaint($event),
+        OWNER   => $nick,
+        CHANNEL => $channel,
+        DATES   => check_dates( @dates ),
     };
 
     $events_ref->{$next_id} = $event_ref;
 
-    my $response = write_data_to_json_file($EVENTS_FILE, $events_ref);
+    my $response = tools::write_data_to_json_file($EVENTS_FILE, $events_ref);
 
     if ($response == 1) {
         # File written successfully - return event id
-        return $next_id;
+        return($next_id, $event_ref->{EVENT});
     } else {
-        return "Events data was not saved";
+        return "Events data was not saved: $response";
     }
 }
 
 sub check_dates {
-    my $dates_array_ref = shift;
+    my @dates = @_;
 
-    my @dates;
-    foreach my $date (@{ $dates_array_ref }) {
-        my $untainted_date = untaint( $date );
+    my @untainted;
+    foreach my $date (@dates) {
+        my $untainted_date = tools::untaint( $date );
         # todo - consider checking date format
-        push(@dates, $untainted_date);
+        push(@untainted, $untainted_date);
     }
 
-    return \@dates;
+    return \@untainted;
 }
 
 sub calculate_next_id {
