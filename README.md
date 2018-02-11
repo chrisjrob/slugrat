@@ -2,7 +2,7 @@
 
 Proposal for an IRC Event Organiser
 
-** THIS IS A PROPOSAL ONLY - THERE IS NO CODE **
+**THIS IS A PROPOSAL ONLY - THERE IS NO CODE**
 
 
 ## Help Commands
@@ -175,7 +175,7 @@ Proposal for an IRC Event Organiser
 
 ## Data storage
 
-Possibly data structure format:
+Possible data structure:
 
     $events = {
         '1' = {
