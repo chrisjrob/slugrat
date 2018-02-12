@@ -69,6 +69,7 @@ POE::Session->create(
             irc_botcmd_ignore
             irc_botcmd_add
             irc_botcmd_list
+            irc_botcmd_delete
         ) ],
     ],
     heap => { irc => $irc },
@@ -120,6 +121,7 @@ sub _start {
                 ignore      => 'Maintain nick ignore list for bots - takes two arguments - add|del|list <nick>',
                 add         => 'To add an event, use: slugrat: add "Name of event" <ISO Date 1> <ISO Date 2> ...',
                 list        => 'To list all events, use: slugrat: list',
+                delete      => 'To delete an events, use: slugrat: delete <event id>',
             },
             In_channels     => 1,
             In_private      => $CONF->param('private'),
@@ -300,6 +302,23 @@ sub irc_botcmd_list {
     foreach my $event_id (sort keys %{ $events_ref }) {
         $irc->yield( notice => $channel => "$event_id - $events_ref->{ $event_id }{EVENT} ($events_ref->{ $event_id }{STATUS})");
     }
+
+    # Restart the lag_o_meter
+    $kernel->delay( 'lag_o_meter' => $LAG );
+
+    return;
+
+}
+
+# Delete Event
+# <majorbull> slugrat: delete <event id>
+#
+sub irc_botcmd_delete {
+    my ($kernel, $who, $channel, $request) = @_[KERNEL, ARG0 .. ARG2];
+    my $nick            = ( split /!/, $who )[0];
+
+    my ($response, $message) = events::delete($channel, $nick, $request);
+    $irc->yield( notice => $channel => $message);
 
     # Restart the lag_o_meter
     $kernel->delay( 'lag_o_meter' => $LAG );

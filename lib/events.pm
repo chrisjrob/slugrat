@@ -8,6 +8,7 @@ my @functions = qw(
     create
     add
     list
+    delete
 );
 
 our $VERSION     = 1.00;
@@ -66,6 +67,47 @@ sub list {
     });
 
     return $filtered_ref;
+}
+
+sub delete {
+    my ($channel, $nick, $request) = @_;
+
+    unless ($request =~ /^\d+$/) {
+        return(0, "Please specify the event ID to be deleted");
+    }
+
+    my $events_ref  = tools::load_json_from_file($EVENTS_FILE);
+
+    my $response = 0;
+    my $message  = "Event $request not found";
+
+    my %remaining;
+    foreach my $event_id (keys %{ $events_ref }) {
+        if ( ($event_id == $request) and ($nick eq $events_ref->{ $event_id }{OWNER}) ) {
+            # Skip record to delete it
+            $response = 1;
+            $message  = "Event $event_id deleted successfully.";
+        } elsif ($event_id == $request) {
+            $remaining{ $event_id } = $events_ref->{ $event_id };
+            $response = 0;
+            $message  = "You must be the event owner";
+        } else {
+            $remaining{ $event_id } = $events_ref->{ $event_id };
+        }
+    }
+
+    if ($response == 0) {
+        return($response, $message);
+    }
+
+    $response = tools::write_data_to_json_file($EVENTS_FILE, \%remaining);
+
+    if ($response == 1) {
+        return(1, $message);
+    } else {
+        return(0, "Events data was not saved: $response");
+    }
+
 }
 
 sub filter_by {
