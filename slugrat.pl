@@ -72,6 +72,7 @@ POE::Session->create(
             irc_botcmd_delete
             irc_botcmd_show
             irc_botcmd_edit
+            irc_botcmd_open
         ) ],
     ],
     heap => { irc => $irc },
@@ -128,6 +129,7 @@ sub _start {
                 delete      => "To delete an event, use: $botnick: delete <event id>",
                 show        => "To show the detail for an event, use: $botnick: show <event id>",
                 edit        => "To edit an event, use: $botnick: edit <event id> \"Name of Event\" <ISO Date 1> <ISO Date 2> ...",
+                open        => "To open an event, use: $botnick: open <event id>",
             },
             In_channels     => 1,
             In_private      => $CONF->param('private'),
@@ -299,7 +301,7 @@ sub irc_botcmd_edit {
 
     my ($event_id, $event_name) = events::edit($channel, $nick, $request);
 
-    if (defined $event_name) {
+    if ( ($event_id != 0) and (defined $event_name) ) {
         $irc->yield( notice => $channel => "$event_name updated successfully - ID $event_id");
     } else {
         $irc->yield( notice => $channel => "Event could not be updated - error $event_id");
@@ -385,6 +387,22 @@ sub irc_botcmd_show {
 
     return;
 
+}
+
+# Open Event
+# <majorbull> slugrat: open <event id>
+#
+sub irc_botcmd_open {
+    my ($kernel, $who, $channel, $request) = @_[KERNEL, ARG0 .. ARG2];
+    my $nick            = ( split /!/, $who )[0];
+
+    my ($response, $message) = events::eopen($channel, $nick, $request);
+    $irc->yield( notice => $channel => $message);
+
+    # Restart the lag_o_meter
+    $kernel->delay( 'lag_o_meter' => $LAG );
+
+    return;
 }
 
 # Enable the ability to respond to everything, not just pre-defined commands

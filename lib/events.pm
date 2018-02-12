@@ -58,11 +58,11 @@ sub edit {
 
     my $events_ref  = tools::load_json_from_file($EVENTS_FILE);
 
-    if ($channel ne $events_ref->{ $event_id }{CHANNEL}) {
+    if (not defined $events_ref->{ $event_id }) {
+        return(0, "Event ID $event_id not found");
+    } elsif ($channel ne $events_ref->{ $event_id }{CHANNEL}) {
         return(0, "You must be in the event's channel");
-    }
-
-    if ($nick ne $events_ref->{ $event_id }{OWNER}) {
+    } elsif ($nick ne $events_ref->{ $event_id }{OWNER}) {
         return(0, "You are not the owner of event $event_id");
     }
 
@@ -173,6 +173,31 @@ sub detail {
     } else {
         return(0, "Event ID not found");
     }
+}
+
+sub eopen {
+    my ($channel, $nick, $request) = @_;
+
+    unless ($request =~ /^\d+$/) {
+        return(0, "Please specify the event ID to open");
+    }
+
+    my $events_ref  = tools::load_json_from_file($EVENTS_FILE);
+
+    if (not defined $events_ref->{ $request }) {
+        return(0, "Event ID not found");
+    }
+
+    $events_ref->{ $request }{STATUS} = 'OPEN';
+
+    my $response = tools::write_data_to_json_file($EVENTS_FILE, $events_ref);
+
+    if ($response == 1) {
+        return(1, "Event $request now open");
+    } else {
+        return(0, "Events data was not saved: $response");
+    }
+
 }
 
 sub filter_by {
