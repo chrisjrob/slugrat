@@ -68,6 +68,7 @@ POE::Session->create(
             irc_botcmd_op
             irc_botcmd_ignore
             irc_botcmd_add
+            irc_botcmd_list
         ) ],
     ],
     heap => { irc => $irc },
@@ -118,6 +119,7 @@ sub _start {
                 op          => 'Currently has no other purpose than to tell you if you are an op or not!',
                 ignore      => 'Maintain nick ignore list for bots - takes two arguments - add|del|list <nick>',
                 add         => 'To add an event, use: slugrat: add "Name of event" <ISO Date 1> <ISO Date 2> ...',
+                list        => 'To list all events, use: slugrat: list',
             },
             In_channels     => 1,
             In_private      => $CONF->param('private'),
@@ -271,6 +273,32 @@ sub irc_botcmd_add {
         $irc->yield( privmsg => $channel => "$nick: $event_name created successfully - ID $event_id");
     } else {
         $irc->yield( privmsg => $channel => "$nick: Event could not be created - error $event_id");
+    }
+
+    # Restart the lag_o_meter
+    $kernel->delay( 'lag_o_meter' => $LAG );
+
+    return;
+
+}
+
+# List Events
+# <majorbull> slugrat: list
+#
+sub irc_botcmd_list {
+    my ($kernel, $who, $channel, $request) = @_[KERNEL, ARG0 .. ARG2];
+    my $nick            = ( split /!/, $who )[0];
+
+    my $events_ref = events::list($channel);
+    my $count = keys %{ $events_ref };
+
+    if ($count == 0) {
+        $irc->yield( privmsg => $channel => "$nick: No events available");
+        return;
+    }
+
+    foreach my $event_id (sort keys %{ $events_ref }) {
+        $irc->yield( privmsg => $channel => "$nick: $event_id - $events_ref->{ $event_id }{EVENT} ($events_ref->{ $event_id }{STATUS})");
     }
 
     # Restart the lag_o_meter
