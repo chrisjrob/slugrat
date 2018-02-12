@@ -50,6 +50,55 @@ sub create {
     }
 }
 
+sub edit {
+    my ($channel, $nick, $request) = @_;
+
+    use Text::ParseWords;
+    my ($event_id, $event_name, @dates) = parse_line(' ', 0, $request);
+
+    my $events_ref  = tools::load_json_from_file($EVENTS_FILE);
+
+    if ($channel ne $events_ref->{ $event_id }{CHANNEL}) {
+        return(0, "You must be in the event's channel");
+    }
+
+    if ($nick ne $events_ref->{ $event_id }{OWNER}) {
+        return(0, "You are not the owner of event $event_id");
+    }
+
+    my $count = @dates;
+
+    my $event_ref;
+    if ($count == 0) {
+        $event_ref = {
+            EVENT   => tools::untaint($event_name),
+            OWNER   => $nick,
+            CHANNEL => $channel,
+            DATES   => $events_ref->{ $event_id }{DATES},
+            STATUS  => $events_ref->{ $event_id }{STATUS},
+        };
+    } else {
+        $event_ref = {
+            EVENT   => tools::untaint($event_name),
+            OWNER   => $nick,
+            CHANNEL => $channel,
+            DATES   => check_dates( @dates ),
+            STATUS  => $events_ref->{ $event_id }{STATUS},
+        };
+    }
+
+    $events_ref->{ $event_id } = $event_ref;
+
+    my $response = tools::write_data_to_json_file($EVENTS_FILE, $events_ref);
+
+    if ($response == 1) {
+        # File written successfully - return event id
+        return($event_id, $event_ref->{EVENT});
+    } else {
+        return "Events data was not saved: $response";
+    }
+}
+
 sub list {
     my $channel = shift;
     my $status  = shift;
@@ -83,14 +132,14 @@ sub delete {
 
     my %remaining;
     foreach my $event_id (keys %{ $events_ref }) {
-        if ( ($event_id == $request) and ($nick eq $events_ref->{ $event_id }{OWNER}) ) {
+        if ( ($event_id == $request) and ($channel eq $events_ref->{ $event_id }{CHANNEL}) and ($nick eq $events_ref->{ $event_id }{OWNER}) ) {
             # Skip record to delete it
             $response = 1;
             $message  = "Event $event_id deleted successfully.";
         } elsif ($event_id == $request) {
             $remaining{ $event_id } = $events_ref->{ $event_id };
             $response = 0;
-            $message  = "You must be the event owner";
+            $message  = "You must be in the event channel and be the event owner to delete it.";
         } else {
             $remaining{ $event_id } = $events_ref->{ $event_id };
         }

@@ -8,7 +8,7 @@ Proposal for an IRC Event Organiser
 ## Help Commands
 
     <johnbull> slugrat: help
-    <slugrat> Commands: list, show, accept, reject, add, edit, delete, rename, open, close, voters
+    <slugrat> Commands: list, show, accept, reject, add, edit, delete, open, close, voters
     <slugrat> For more details, use: slugrat: help <command>
 
 
@@ -35,13 +35,10 @@ Proposal for an IRC Event Organiser
     <slugrat> To add an event, use: slugrat: add "Name of event" <ISO Date 1> <ISO Date 2> ...
 
     <majorbull> slugrat: help edit
-    <slugrat> To edit an event, use: slugrat: edit <event number> <ISO Date 1> <ISO Date 2> ...
+    <slugrat> To edit an event, use: slugrat: edit <event number> "Name of event" <ISO Date 1> <ISO Date 2> ...
 
     <majorbull> slugrat: help delete
     <slugrat> To delete an event, use: slugrat: delete <event number>
-
-    <majorbull> slugrat: help rename
-    <slugrat> To rename an event, use: slugrat: rename <number> "New Name"
 
     <majorbull> slugrat: help open
     <slugrat> Opening an event will announce event to the channel and allow responses
@@ -107,7 +104,7 @@ Proposal for an IRC Event Organiser
 
 ### Amend dates and re-open event
 
-    <majorbull> slugrat: edit 1 2018-02-06 2018-02-21 2018-02-28
+    <majorbull> slugrat: edit 1 "Pub Meet" 2018-02-06 2018-02-21 2018-02-28
     <slugrat> majorbull: Event 1 "Pub Meet" edited successfully
     <slugrat> To open the event, use: slugrat: open 1
     
@@ -165,8 +162,8 @@ Proposal for an IRC Event Organiser
     <majorbull> slugrat: delete 3
     <slugrat> 3 - Tiddlywinks Evening - deleted
 
-    <majorbull> slugrat: rename 4 "Spring Pub Meet"
-    <slugrat> Renamed 4 - Spring Pub Meet
+    <majorbull> slugrat: edit 4 "Spring Pub Meet"
+    <slugrat> Updated 4 - Spring Pub Meet
 
     <majorbull> slugrat: list
     <slugrat> 2 - Curry Night - open

@@ -71,6 +71,7 @@ POE::Session->create(
             irc_botcmd_list
             irc_botcmd_delete
             irc_botcmd_show
+            irc_botcmd_edit
         ) ],
     ],
     heap => { irc => $irc },
@@ -114,16 +115,19 @@ sub _start {
     );
     $irc->plugin_add( 'Connector' => $heap->{connector} );
 
+    my $botnick = $CONF->param('nickname');
+
     # Commands
     $irc->plugin_add('BotCommand',
         POE::Component::IRC::Plugin::BotCommand->new(
             Commands => {
                 op          => 'Currently has no other purpose than to tell you if you are an op or not!',
                 ignore      => 'Maintain nick ignore list for bots - takes two arguments - add|del|list <nick>',
-                add         => 'To add an event, use: slugrat: add "Name of event" <ISO Date 1> <ISO Date 2> ...',
-                list        => 'To list all events, use: slugrat: list',
-                delete      => 'To delete an events, use: slugrat: delete <event id>',
-                show        => 'To show the detail for an event, use: slugrat: show <event id>',
+                add         => "To add an event, use: $botnick: add \"Name of event\" <ISO Date 1> <ISO Date 2> ...",
+                list        => "To list all events, use: $botnick: list",
+                delete      => "To delete an event, use: $botnick: delete <event id>",
+                show        => "To show the detail for an event, use: $botnick: show <event id>",
+                edit        => "To edit an event, use: $botnick: edit <event id> \"Name of Event\" <ISO Date 1> <ISO Date 2> ...",
             },
             In_channels     => 1,
             In_private      => $CONF->param('private'),
@@ -286,6 +290,28 @@ sub irc_botcmd_add {
 
 }
 
+# Edit Event
+# <majorbull> slugrat: edit 1 "Pub Meet" 2018-02-06 2018-02-13 2018-02-21
+#
+sub irc_botcmd_edit {
+    my ($kernel, $who, $channel, $request) = @_[KERNEL, ARG0 .. ARG2];
+    my $nick            = ( split /!/, $who )[0];
+
+    my ($event_id, $event_name) = events::edit($channel, $nick, $request);
+
+    if (defined $event_name) {
+        $irc->yield( notice => $channel => "$event_name updated successfully - ID $event_id");
+    } else {
+        $irc->yield( notice => $channel => "Event could not be updated - error $event_id");
+    }
+
+    # Restart the lag_o_meter
+    $kernel->delay( 'lag_o_meter' => $LAG );
+
+    return;
+
+}
+
 # List Events
 # <majorbull> slugrat: list
 #
@@ -297,7 +323,7 @@ sub irc_botcmd_list {
     my $count = keys %{ $events_ref };
 
     if ($count == 0) {
-        $irc->yield( notice => $channel => "$nick: No events available");
+        $irc->yield( notice => $channel => "There are currently no events.");
         return;
     }
 
