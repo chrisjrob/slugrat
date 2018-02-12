@@ -177,7 +177,7 @@ sub irc_invite {
 
     if ($CONF->param('invites') == 0) {
         warn "Invites not permitted - invitation by $who to join $where was ignored";
-        $irc->yield( privmsg => $nick => "My apologies but current configuration is to ignore invitations" );
+        $irc->yield( notice => $nick => "Current configuration is to ignore invitations" );
         return;
     }
 
@@ -213,9 +213,9 @@ sub irc_botcmd_op {
     my $nick = ( split /!/, $who )[0];
 
     if ( is_op($channel, $nick) ) {
-        $irc->yield( privmsg => $channel => "$nick: You are indeed a might op!");
+        $irc->yield( notice => $channel => "You are indeed a might op!");
     } else {
-        $irc->yield( privmsg => $channel => "$nick: Only channel operators may do that!");
+        $irc->yield( notice => $channel => "Only channel operators may do that!");
     } 
 
     # Restart the lag_o_meter
@@ -234,12 +234,12 @@ sub irc_botcmd_ignore {
     my ($action, $bot)  = split(/\s+/, $request);
 
     unless ( ( is_op($channel, $nick) ) or ($nick eq $bot) ) {
-        $irc->yield( privmsg => $channel => "$nick: Only channel operators may do that!");
+        $irc->yield( notice => $channel => "Only channel operators may do that!");
         return;
     }
 
     if ((not defined $request) or ($request =~ /^\s*$/)) {
-        $irc->yield( privmsg => $channel => "$nick: Command ignore should be followed by a nick.");
+        $irc->yield( notice => $channel => "Command ignore should be followed by a nick.");
         return;
     }
 
@@ -252,7 +252,7 @@ sub irc_botcmd_ignore {
         $bots = config::list_bots($CONF);
     }
 
-    $irc->yield( privmsg => $channel => "$nick: Bots - $bots");
+    $irc->yield( notice => $channel => "$nick: Bots - $bots");
 
     # Restart the lag_o_meter
     $kernel->delay( 'lag_o_meter' => $LAG );
@@ -270,9 +270,9 @@ sub irc_botcmd_add {
     my ($event_id, $event_name) = events::create($channel, $nick, $request);
 
     if (defined $event_name) {
-        $irc->yield( privmsg => $channel => "$nick: $event_name created successfully - ID $event_id");
+        $irc->yield( notice => $channel => "$event_name created successfully - ID $event_id");
     } else {
-        $irc->yield( privmsg => $channel => "$nick: Event could not be created - error $event_id");
+        $irc->yield( notice => $channel => "Event could not be created - error $event_id");
     }
 
     # Restart the lag_o_meter
@@ -293,12 +293,12 @@ sub irc_botcmd_list {
     my $count = keys %{ $events_ref };
 
     if ($count == 0) {
-        $irc->yield( privmsg => $channel => "$nick: No events available");
+        $irc->yield( notice => $channel => "$nick: No events available");
         return;
     }
 
     foreach my $event_id (sort keys %{ $events_ref }) {
-        $irc->yield( privmsg => $channel => "$nick: $event_id - $events_ref->{ $event_id }{EVENT} ($events_ref->{ $event_id }{STATUS})");
+        $irc->yield( notice => $channel => "$event_id - $events_ref->{ $event_id }{EVENT} ($events_ref->{ $event_id }{STATUS})");
     }
 
     # Restart the lag_o_meter
@@ -329,7 +329,7 @@ sub irc_public {
     # This is a bug I think in botcommand plugin
     if (my ($command) = $what =~ /^(?:$prefix|$whoami:)\s*(op|ignore|help)\s+$/i) {
         warn "==================================== A ==================================";
-        $irc->yield( privmsg => $channel => "$nick: $command followed by whitespace only is invalid.");
+        $irc->yield( notice => $channel => "$command followed by whitespace only is invalid.");
 
     # Do nothing - these requests being handled by irc_command_*
     } elsif ($what =~ /^(?:$prefix|$whoami:)\s*(?:op|ignore|help)/i) {
