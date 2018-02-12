@@ -110,6 +110,22 @@ sub delete {
 
 }
 
+sub detail {
+    my ($channel, $nick, $request) = @_;
+
+    unless ($request =~ /^\d+$/) {
+        return(0, "Please specify the event ID to show");
+    }
+
+    my $events_ref  = tools::load_json_from_file($EVENTS_FILE);
+
+    if (defined $events_ref->{ $request }) {
+        return($request, $events_ref->{ $request });
+    } else {
+        return(0, "Event ID not found");
+    }
+}
+
 sub filter_by {
     my $events_ref  = shift;
     my $filters_ref = shift;

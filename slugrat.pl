@@ -70,6 +70,7 @@ POE::Session->create(
             irc_botcmd_add
             irc_botcmd_list
             irc_botcmd_delete
+            irc_botcmd_show
         ) ],
     ],
     heap => { irc => $irc },
@@ -122,6 +123,7 @@ sub _start {
                 add         => 'To add an event, use: slugrat: add "Name of event" <ISO Date 1> <ISO Date 2> ...',
                 list        => 'To list all events, use: slugrat: list',
                 delete      => 'To delete an events, use: slugrat: delete <event id>',
+                show        => 'To show the detail for an event, use: slugrat: show <event id>',
             },
             In_channels     => 1,
             In_private      => $CONF->param('private'),
@@ -319,6 +321,38 @@ sub irc_botcmd_delete {
 
     my ($response, $message) = events::delete($channel, $nick, $request);
     $irc->yield( notice => $channel => $message);
+
+    # Restart the lag_o_meter
+    $kernel->delay( 'lag_o_meter' => $LAG );
+
+    return;
+
+}
+
+# Show Event
+# <majorbull> slugrat: show <event id>
+#
+sub irc_botcmd_show {
+    my ($kernel, $who, $channel, $request) = @_[KERNEL, ARG0 .. ARG2];
+    my $nick            = ( split /!/, $who )[0];
+
+    my ($event_id, $event_ref) = events::detail($channel, $nick, $request);
+
+    if ($event_id == 0) {
+        $irc->yield( notice => $channel => "$event_ref" );
+        return;
+    }
+
+    my $char = 65;
+    foreach my $date (sort @{ $event_ref->{DATES} }) {
+        $irc->yield( notice => $channel => chr($char) . " - $event_ref->{EVENT} on $date" );
+        $char++;
+    }
+
+    my $botname = $CONF->param('nickname');
+    if ($event_ref->{STATUS} ne 'OPEN') {
+        $irc->yield( notice => $channel => "To open the event, use $botname: open $event_id" );
+    }
 
     # Restart the lag_o_meter
     $kernel->delay( 'lag_o_meter' => $LAG );
