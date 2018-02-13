@@ -358,7 +358,8 @@ sub irc_botcmd_show {
     my $char = 65;
     foreach my $date (sort @{ $event_ref->{DATES} }) {
         my $score = keys @{ $scores_ref->{ $event_id }{ $date } };
-        $irc->yield( notice => $channel => chr($char) . " - $event_ref->{EVENT} on $date - votes $score" );
+        my $votes = ($score == 1) ? 'vote' : 'votes';
+        $irc->yield( notice => $channel => chr($char) . " - $event_ref->{EVENT} on $date - $score $votes" );
         $char++;
     }
 
