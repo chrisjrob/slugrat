@@ -262,11 +262,29 @@ sub accept {
             push(@dates, $date);
         }
     }
+
     my $dates = join(',', @dates);
 
     append_vote($channel,$nick,$event_id,$dates);
 
+    $dates = join_with_comma_and(@dates);
+
     return(1, "You have accepted dates: $dates");
+}
+
+# Join array in format a, b and c
+# 
+sub join_with_comma_and {
+    my @dates = @_;
+
+    my $dates = join(', ', @dates);
+
+    my $count = @dates;
+    if ($count > 1) {
+        $dates =~ s/,\s([^,]+)$/ and $1/;
+    }
+
+    return $dates;
 }
 
 sub append_vote {
