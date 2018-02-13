@@ -200,6 +200,31 @@ sub eopen {
 
 }
 
+sub eclose {
+    my ($channel, $nick, $request) = @_;
+
+    unless ($request =~ /^\d+$/) {
+        return(0, "Please specify the event ID to close");
+    }
+
+    my $events_ref  = tools::load_json_from_file($EVENTS_FILE);
+
+    if (not defined $events_ref->{ $request }) {
+        return(0, "Event ID not found");
+    }
+
+    $events_ref->{ $request }{STATUS} = 'CLOSED';
+
+    my $response = tools::write_data_to_json_file($EVENTS_FILE, $events_ref);
+
+    if ($response == 1) {
+        return(1, "Event $request now closed");
+    } else {
+        return(0, "Events data was not saved: $response");
+    }
+
+}
+
 sub filter_by {
     my $events_ref  = shift;
     my $filters_ref = shift;
