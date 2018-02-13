@@ -65,7 +65,6 @@ POE::Session->create(
             irc_001 
             irc_invite
             irc_kick
-            irc_botcmd_op
             irc_botcmd_ignore
             irc_botcmd_add
             irc_botcmd_list
@@ -125,7 +124,6 @@ sub _start {
     $irc->plugin_add('BotCommand',
         POE::Component::IRC::Plugin::BotCommand->new(
             Commands => {
-                op          => 'Currently has no other purpose than to tell you if you are an op or not!',
                 ignore      => 'Maintain nick ignore list for bots - takes two arguments - add|del|list <nick>',
                 add         => "To add an event, use: $botnick: add \"Name of event\" <ISO Date 1> <ISO Date 2> ...",
                 list        => "To list all events, use: $botnick: list",
@@ -219,26 +217,6 @@ sub irc_kick {
     $kernel->delay( 'lag_o_meter' => $LAG );
 
     return;
-}
-
-# All this currently does is confirm whether or not you are an op
-# No options
-#
-sub irc_botcmd_op {
-    my ($kernel, $who, $channel, $request) = @_[KERNEL, ARG0 .. ARG2];
-    my $nick = ( split /!/, $who )[0];
-
-    if ( is_op($channel, $nick) ) {
-        $irc->yield( notice => $channel => "You are indeed a might op!");
-    } else {
-        $irc->yield( notice => $channel => "Only channel operators may do that!");
-    } 
-
-    # Restart the lag_o_meter
-    $kernel->delay( 'lag_o_meter' => $LAG );
-
-    return;
-
 }
 
 # Maintains list of bots (or other nicks) to ignore
