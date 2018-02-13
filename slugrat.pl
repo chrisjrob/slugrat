@@ -75,6 +75,7 @@ POE::Session->create(
             irc_botcmd_close
             irc_botcmd_accept
             irc_botcmd_reject
+            irc_botcmd_voters
         ) ],
     ],
     heap => { irc => $irc },
@@ -134,6 +135,7 @@ sub _start {
                 close       => "To close an event, use: $botnick: close <event id>",
                 accept      => "To accept an event, use: $botnick: accept <event id> <A> <B>",
                 reject      => "To reject all dates for an event, use: $botnick: reject <event id>",
+                voters      => "To view the voters for an event, use: $botnick: voters <event id>",
             },
             In_channels     => 1,
             In_private      => $CONF->param('private'),
@@ -360,6 +362,45 @@ sub irc_botcmd_show {
         my $score = keys @{ $scores_ref->{ $event_id }{ $date } };
         my $votes = ($score == 1) ? 'vote' : 'votes';
         $irc->yield( notice => $channel => chr($char) . " - $event_ref->{EVENT} on $date - $score $votes" );
+        $char++;
+    }
+
+    my $botname = $CONF->param('nickname');
+    if ($event_ref->{STATUS} ne 'OPEN') {
+        $irc->yield( notice => $channel => "To open the event, use $botname: open $event_id" );
+    }
+
+    # Restart the lag_o_meter
+    $kernel->delay( 'lag_o_meter' => $LAG );
+
+    return;
+
+}
+
+# View Voters for an Event
+# <majorbull> slugrat: voters <event id>
+#
+sub irc_botcmd_voters {
+    my ($kernel, $who, $channel, $request) = @_[KERNEL, ARG0 .. ARG2];
+    my $nick            = ( split /!/, $who )[0];
+
+    my ($event_id, $event_ref, $scores_ref) = events::detail($channel, $nick, $request);
+
+    if ($event_id == 0) {
+        $irc->yield( notice => $channel => "$event_ref" );
+        return;
+    }
+
+    my $char = 65;
+    foreach my $date (sort @{ $event_ref->{DATES} }) {
+        my $score = keys @{ $scores_ref->{ $event_id }{ $date } };
+        my $votes = ($score == 1) ? 'vote' : 'votes';
+        my $voters = '';
+        if ($score != 0) {
+            $voters = '(' . join(" ", @{ $scores_ref->{ $event_id }{ $date } } ) . ')';
+        }
+
+        $irc->yield( notice => $channel => chr($char) . " - $event_ref->{EVENT} on $date - $score $votes $voters" );
         $char++;
     }
 
