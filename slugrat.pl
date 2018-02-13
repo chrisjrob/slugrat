@@ -134,7 +134,7 @@ sub _start {
                 edit        => "To edit an event, use: $botnick: edit <event id> \"Name of Event\" <ISO Date 1> <ISO Date 2> ...",
                 open        => "To open an event, use: $botnick: open <event id>",
                 close       => "To close an event, use: $botnick: close <event id>",
-                accept      => "To accept an event, use: $botnick: accept <event id> <Date A> <Date B>",
+                accept      => "To accept an event, use: $botnick: accept <event id> <A> <B>",
                 reject      => "To reject all dates for an event, use: $botnick: reject <event id>",
             },
             In_channels     => 1,
