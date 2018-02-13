@@ -185,12 +185,8 @@ Possible data structure:
         },        
     }
     
-    $votes  = [
-        {
-            date    => 2018-02-13,
-            nick    => 'jilljet',
-            channel => '#chanabc',
-            timestamp   => '2018-01-09 16.13',
-        },
-    ]
-    
+Votes to be appended in simple CSV file, in format:
+
+    channel,nick,event_id,dates...
+    #chanabc,majorbull,1,2018-02-13,2018-02-20
+
