@@ -370,7 +370,7 @@ sub irc_botcmd_show {
     my ($kernel, $who, $channel, $request) = @_[KERNEL, ARG0 .. ARG2];
     my $nick            = ( split /!/, $who )[0];
 
-    my ($event_id, $event_ref) = events::detail($channel, $nick, $request);
+    my ($event_id, $event_ref, $scores_ref) = events::detail($channel, $nick, $request);
 
     if ($event_id == 0) {
         $irc->yield( notice => $channel => "$event_ref" );
@@ -379,7 +379,8 @@ sub irc_botcmd_show {
 
     my $char = 65;
     foreach my $date (sort @{ $event_ref->{DATES} }) {
-        $irc->yield( notice => $channel => chr($char) . " - $event_ref->{EVENT} on $date" );
+        my $score = keys @{ $scores_ref->{ $event_id }{ $date } };
+        $irc->yield( notice => $channel => chr($char) . " - $event_ref->{EVENT} on $date - votes $score" );
         $char++;
     }
 

@@ -171,9 +171,10 @@ sub detail {
     }
 
     my $events_ref  = tools::load_json_from_file($EVENTS_FILE);
+    my $scores_ref  = scores_by_date( $channel );
 
     if (defined $events_ref->{ $request }) {
-        return($request, $events_ref->{ $request });
+        return($request, $events_ref->{ $request }, $scores_ref);
     } else {
         return(0, "Event ID not found");
     }
@@ -273,16 +274,30 @@ sub accept {
     return(1, "You have accepted dates: $dates");
 }
 
-sub load_scores_from_file {
-    open(my $fh_votes, "<", $VOTES_FILE) 
+sub scores_by_date {
+    my ($channel, $event_id) = @_;
+    
+    my $scores_ref          = load_scores_for_channel( $channel );
+    my $scores_by_date_ref  = map_scores_by_date( $scores_ref );
+
+    return $scores_by_date_ref;
+}
+
+sub load_scores_for_channel {
+    my $channel = shift;
+
+    open(my $fh_votes, '<', $VOTES_FILE) 
         or die "Cannot read from $VOTES_FILE: $!";
 
     my %scores;
     while ( defined(my $line = <$fh_votes>) ) {
-        my ($chan, $nick, $evid, @dates) = split(",", $line);
+        chomp($line);
+        my ($chan, $nick, $evid, @dates) = split(',', $line);
+
+        next if ($chan ne $channel);
 
         # Allow later votes to overwrite earlier votes
-        $scores{ $chan }{ $nick }{ $evid } = \@dates;
+        $scores{ $evid }{ $nick } = \@dates;
     }
 
     close($fh_votes) or die "Cannot close $VOTES_FILE: $!";
@@ -290,13 +305,19 @@ sub load_scores_from_file {
     return \%scores;
 }
 
-sub scores_for_event {
-    my ($channel, $event_id) = @_;
-    
-    my $scores_ref = load_scores_from_file();
+sub map_scores_by_date {
+    my $scores_ref = shift;    
 
-    # Format of data
-    # $scores_ref{ $channel }{ $nick }{ $event_id } = \@dates;
+    my %scores;
+    foreach my $event_id (sort keys %{ $scores_ref }) {
+        foreach my $nick (sort keys %{ $scores_ref->{ $event_id } }) {
+            foreach my $date (sort @{ $scores_ref->{ $event_id }{ $nick } }) {
+                push( @{ $scores{ $event_id }{ $date } }, $nick );
+            }
+        }
+    }
+
+    return \%scores;
 
 }
 
