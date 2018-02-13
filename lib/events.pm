@@ -12,6 +12,7 @@ my @functions = qw(
     open
     close
     accept
+    scores
 );
 
 our $VERSION     = 1.00;
@@ -271,6 +272,36 @@ sub accept {
 
     return(1, "You have accepted dates: $dates");
 }
+
+sub load_scores_from_file {
+    open(my $fh_votes, "<", $VOTES_FILE) 
+        or die "Cannot read from $VOTES_FILE: $!";
+
+    my %scores;
+    while ( defined(my $line = <$fh_votes>) ) {
+        my ($chan, $nick, $evid, @dates) = split(",", $line);
+
+        # Allow later votes to overwrite earlier votes
+        $scores{ $chan }{ $nick }{ $evid } = \@dates;
+    }
+
+    close($fh_votes) or die "Cannot close $VOTES_FILE: $!";
+
+    return \%scores;
+}
+
+sub scores_for_event {
+    my ($channel, $event_id) = @_;
+    
+    my $scores_ref = load_scores_from_file();
+
+    # Format of data
+    # $scores_ref{ $channel }{ $nick }{ $event_id } = \@dates;
+
+}
+
+
+# Internal functions
 
 # Join array in format a, b and c
 # 
