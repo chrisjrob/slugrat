@@ -69,21 +69,21 @@ Proposal for an IRC Event Organiser
     <slugrat> A - Pub Meet on 2018-02-06 - 0 votes
     <slugrat> B - Pub Meet on 2018-02-13 - 0 votes
     <slugrat> C - Pub Meet on 2018-02-21 - 0 votes
-    <slugrat> To attend the event, use: slugrat: accept 1 A B C
+    <slugrat> To attend the event, use: slugrat: accept 1ABC
 
 
 ### Accept an event
 
-    <johnbull> slugrat: accept 1 A C
+    <johnbull> slugrat: accept 1AC
     <slugrat> johnbull: Thank you, you are able to attend Pub Meet on 2018-02-06 and 2018-02-21.
 
     <janebull> slugrat: reject 1
     <slugrat> janebull: Thank you, you are unable to attend Pub Meet on any date.
 
-    <jillbull> slugrat: accept 1 B
+    <jillbull> slugrat: accept 1B
     <slugrat> jillbull: Thank you, you are able to attend Pub Meet on 2018-02-13.
 
-    <fuzzbutt> slugrat: accept 1 A
+    <fuzzbutt> slugrat: accept 1A
     <slugrat> fuzzbutt: Thank you, you are able to attend Pub Meet on 2018-02-06.
 
 
@@ -119,22 +119,22 @@ Proposal for an IRC Event Organiser
     <slugrat> A - Pub Meet on 2018-02-06 - 2 votes
     <slugrat> B - Pub Meet on 2018-02-21 - 1 votes
     <slugrat> C - Pub Meet on 2018-02-28 - 0 votes
-    <slugrat> To attend the event, use: slugrat: accept 1 A B C
+    <slugrat> To attend the event, use: slugrat: accept 1ABC
 
-    <johnbull> slugrat: accept 1 A B C
+    <johnbull> slugrat: accept 1ABC
     <slugrat> johnbull: Thank you, you are able to attend Pub Meet on 2018-02-06, 2018-02-21 and 2018-02-28.
 
-    <janebull> slugrat: accept 1 C
+    <janebull> slugrat: accept 1C
     <slugrat> janebull: Thank you, you are able to attend Pub Meet on 2018-02-28.
 
-    <fuzzbutt> slugrat: accept 1 A C
+    <fuzzbutt> slugrat: accept 1AC
     <slugrat> fuzzbutt: Thank you, you are able to attend Pub Meet on 2018-02-06 and 2018-02-28.
 
     <majorbull> slugrat: show 1
     <slugrat> A - Pub Meet on 2018-02-06 - 2 votes
     <slugrat> B - Pub Meet on 2018-02-21 - 1 vote
     <slugrat> C - Pub Meet on 2018-02-28 - 3 votes
-    <slugrat> To attend the event, use: slugrat: accept 1 A B C
+    <slugrat> To attend the event, use: slugrat: accept 1ABC
 
     <majorbull> slugrat: close 1
     <slugrat> You have closed event 1 - Pub Meet
@@ -143,7 +143,7 @@ Proposal for an IRC Event Organiser
     <slugrat> C - Pub Meet on 2018-02-28 - 3 votes
     <slugrat> To open the event, use: slugrat: open 1
 
-    <majorbull> slugrat: select 1 C
+    <majorbull> slugrat: select 1C
     <slugrat> Thank you, you have selected date 2018-02-28 for Pub Meet.
 
 
