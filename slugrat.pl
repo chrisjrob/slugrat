@@ -391,7 +391,7 @@ sub irc_botcmd_open {
 }
 
 # Close Event
-# <majorbull> slugrat: open <event id>
+# <majorbull> slugrat: close <event id>
 #
 sub irc_botcmd_close {
     my ($kernel, $who, $channel, $request) = @_[KERNEL, ARG0 .. ARG2];
