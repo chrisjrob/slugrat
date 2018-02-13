@@ -74,6 +74,8 @@ POE::Session->create(
             irc_botcmd_edit
             irc_botcmd_open
             irc_botcmd_close
+            irc_botcmd_accept
+            irc_botcmd_reject
         ) ],
     ],
     heap => { irc => $irc },
@@ -131,7 +133,9 @@ sub _start {
                 show        => "To show the detail for an event, use: $botnick: show <event id>",
                 edit        => "To edit an event, use: $botnick: edit <event id> \"Name of Event\" <ISO Date 1> <ISO Date 2> ...",
                 open        => "To open an event, use: $botnick: open <event id>",
-                close        => "To close an event, use: $botnick: close <event id>",
+                close       => "To close an event, use: $botnick: close <event id>",
+                accept      => "To accept an event, use: $botnick: accept <event id> <Date A> <Date B>",
+                reject      => "To reject all dates for an event, use: $botnick: reject <event id>",
             },
             In_channels     => 1,
             In_private      => $CONF->param('private'),
@@ -415,6 +419,38 @@ sub irc_botcmd_close {
     my $nick            = ( split /!/, $who )[0];
 
     my ($response, $message) = events::eclose($channel, $nick, $request);
+    $irc->yield( notice => $channel => $message);
+
+    # Restart the lag_o_meter
+    $kernel->delay( 'lag_o_meter' => $LAG );
+
+    return;
+}
+
+# Accept Event
+# <majorbull> slugrat: accept <event id> A B C
+#
+sub irc_botcmd_accept {
+    my ($kernel, $who, $channel, $request) = @_[KERNEL, ARG0 .. ARG2];
+    my $nick            = ( split /!/, $who )[0];
+
+    my ($response, $message) = events::accept($channel, $nick, $request);
+    $irc->yield( notice => $channel => $message);
+
+    # Restart the lag_o_meter
+    $kernel->delay( 'lag_o_meter' => $LAG );
+
+    return;
+}
+
+# Reject Event
+# <majorbull> slugrat: reject <event id>
+#
+sub irc_botcmd_reject {
+    my ($kernel, $who, $channel, $request) = @_[KERNEL, ARG0 .. ARG2];
+    my $nick            = ( split /!/, $who )[0];
+
+    my ($response, $message) = events::accept($channel, $nick, $request);
     $irc->yield( notice => $channel => $message);
 
     # Restart the lag_o_meter

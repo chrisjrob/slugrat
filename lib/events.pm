@@ -9,6 +9,9 @@ my @functions = qw(
     add
     list
     delete
+    open
+    close
+    accept
 );
 
 our $VERSION     = 1.00;
@@ -19,7 +22,7 @@ our %EXPORT_TAGS = (
     ALL     => [@functions],
 );
 our $EVENTS_FILE = 'events.json';
-our $VOTES_FILE  = 'votes.json';
+our $VOTES_FILE  = 'votes.csv';
 
 sub create {
     my ($channel, $nick, $request) = @_;
@@ -185,7 +188,9 @@ sub eopen {
     my $events_ref  = tools::load_json_from_file($EVENTS_FILE);
 
     if (not defined $events_ref->{ $request }) {
-        return(0, "Event ID not found");
+        return(0, "Event $request not found.");
+    } elsif ( $events_ref->{ $request }{STATUS} eq 'OPEN' ) {
+        return(0, "Event $request is already open.");
     }
 
     $events_ref->{ $request }{STATUS} = 'OPEN';
@@ -223,6 +228,71 @@ sub eclose {
         return(0, "Events data was not saved: $response");
     }
 
+}
+
+sub accept {
+    my ($channel, $nick, $request) = @_;
+
+    # Check valid request
+    if ($request !~ /^[0-9]+(?:[A-Za-z\s]+)?$/) {
+        return(0, "Please enter in format: 1 A B C (spaces optional).");
+    }
+
+    # Make request consistent format 1ABC
+    $request =~ tr/a-z/A-Z/;
+    $request =~ s/\s*//g;
+
+    my ($event_id, @date_ids) = split("", $request);
+
+    # Check event ID exists
+    my $events_ref  = tools::load_json_from_file($EVENTS_FILE);
+    if (not defined $events_ref->{ $event_id }) {
+        return(0, "Event $event_id not found");
+    } elsif ( $events_ref->{ $event_id }{STATUS} ne 'OPEN' ) {
+        return(0, "Event $event_id is not yet open");
+    }
+
+    my $dates_ref = map_dates($events_ref->{ $event_id }{DATES});
+
+    # Create array of dates accepted
+    my @dates;
+    foreach my $date_id (sort @date_ids) {
+        if (defined $dates_ref->{ $date_id }) {
+            my $date = $dates_ref->{ $date_id };
+            push(@dates, $date);
+        }
+    }
+    my $dates = join(',', @dates);
+
+    append_vote($channel,$nick,$event_id,$dates);
+
+    return(1, "You have accepted dates: $dates");
+}
+
+sub append_vote {
+    my ($channel, $nick, $event_id, $dates) = @_;
+
+    open(my $fh_votes, ">>", $VOTES_FILE) 
+        or die "Cannot write to $VOTES_FILE: $!";
+
+    print $fh_votes "$channel,$nick,$event_id,$dates\n";
+
+    close($fh_votes) or die "Cannot close $VOTES_FILE: $!";
+
+    return;
+}
+
+sub map_dates {
+    my $dates_ref = shift;
+
+    my %dates;
+    my $char = 65;
+    foreach my $date (sort @{ $dates_ref }) {
+        $dates{ chr($char) } = $date;
+        $char++;
+    }
+
+    return \%dates;
 }
 
 sub filter_by {
