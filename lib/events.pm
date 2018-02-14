@@ -256,12 +256,18 @@ sub accept {
 
     my $dates_ref = map_dates($events_ref->{ $event_id }{DATES});
 
-    # Create array of dates accepted
     my @dates;
-    foreach my $date_id (sort @date_ids) {
-        if (defined $dates_ref->{ $date_id }) {
-            my $date = $dates_ref->{ $date_id };
-            push(@dates, $date);
+    if ($request =~ /^\d+\s*(?:any|all)$/i) {
+        @dates = @{ $events_ref->{ $event_id }{DATES} };
+    } elsif ($request =~ /^\d+\s*(?:none)$/i) {
+        # Leave @dates empty
+    } else {
+        # Create array of dates accepted
+        foreach my $date_id (sort @date_ids) {
+            if (defined $dates_ref->{ $date_id }) {
+                my $date = $dates_ref->{ $date_id };
+                push(@dates, $date);
+            }
         }
     }
 
@@ -328,6 +334,11 @@ sub map_scores_by_date {
 # 
 sub join_with_comma_and {
     my @dates = @_;
+
+    my $count = @dates;
+    if ($count == 0) {
+        return "None";
+    }
 
     my $dates = join(', ', @dates);
 
