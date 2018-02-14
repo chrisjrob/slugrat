@@ -127,7 +127,7 @@ sub _start {
             Commands => {
                 ignore      => 'Maintain nick ignore list for bots - takes two arguments - add|del|list <nick>',
                 add         => "To add an event, use: $botnick: add \"Name of event\" <ISO Date 1> <ISO Date 2> ...",
-                list        => "To list all events, use: $botnick: list",
+                list        => "To list all events, use: $botnick: list <all|created|open|closed>",
                 delete      => "To delete an event, use: $botnick: delete <event id>",
                 show        => "To show the detail for an event, use: $botnick: show <event id>",
                 edit        => "To edit an event, use: $botnick: edit <event id> \"Name of Event\" <ISO Date 1> <ISO Date 2> ...",
@@ -305,10 +305,11 @@ sub irc_botcmd_edit {
 #
 sub irc_botcmd_list {
     my ($kernel, $who, $channel, $request) = @_[KERNEL, ARG0 .. ARG2];
-    my $nick            = ( split /!/, $who )[0];
 
-    my $events_ref = events::list($channel);
-    my $count = keys %{ $events_ref };
+    my $nick        = ( split /!/, $who )[0];
+    my $status      = requested_status($request);
+    my $events_ref  = events::list($channel, $status);
+    my $count       = keys %{ $events_ref };
 
     if ($count == 0) {
         $irc->yield( notice => $channel => "There are currently no events.");
@@ -547,3 +548,13 @@ sub is_op {
   return 0;
 }
 
+sub requested_status {
+    my $request = shift;
+
+    my $status = 'OPEN';
+    if ($request =~ /^\s*(all|created|open|closed)\s*$/i) {
+        $status = uc($request);
+    }
+        
+    return $status;
+}
