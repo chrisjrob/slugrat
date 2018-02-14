@@ -370,7 +370,7 @@ sub irc_botcmd_show {
     if ($event_ref->{STATUS} ne 'OPEN') {
         $irc->yield( notice => $channel => "To open the event, use $botnick: open $event_id" );
     } else {
-        $irc->yield( notice => $channel => "To accept event dates, use $botnick: accept 1ABC.");
+        $irc->yield( notice => $channel => "To accept event dates, use $botnick: accept 1ABC");
     }
 
     # Restart the lag_o_meter
