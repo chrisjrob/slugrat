@@ -38,7 +38,7 @@ sub create {
         EVENT   => tools::untaint($event),
         OWNER   => $nick,
         CHANNEL => $channel,
-        DATES   => check_dates( @dates ),
+        DATES   => check_dates( @dates[0 .. 11] ),
         STATUS  => 'CREATED',
     };
 
