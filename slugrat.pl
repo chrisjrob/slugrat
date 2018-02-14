@@ -366,9 +366,11 @@ sub irc_botcmd_show {
         $char++;
     }
 
-    my $botname = $CONF->param('nickname');
+    my $botnick = $CONF->param('nickname');
     if ($event_ref->{STATUS} ne 'OPEN') {
-        $irc->yield( notice => $channel => "To open the event, use $botname: open $event_id" );
+        $irc->yield( notice => $channel => "To open the event, use $botnick: open $event_id" );
+    } else {
+        $irc->yield( notice => $channel => "To accept event dates, use $botnick: accept 1ABC.");
     }
 
     # Restart the lag_o_meter
@@ -405,9 +407,9 @@ sub irc_botcmd_voters {
         $char++;
     }
 
-    my $botname = $CONF->param('nickname');
+    my $botnick = $CONF->param('nickname');
     if ($event_ref->{STATUS} ne 'OPEN') {
-        $irc->yield( notice => $channel => "To open the event, use $botname: open $event_id" );
+        $irc->yield( notice => $channel => "To open the event, use $botnick: open $event_id" );
     }
 
     # Restart the lag_o_meter
