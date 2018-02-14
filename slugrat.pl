@@ -268,7 +268,7 @@ sub irc_botcmd_add {
     if (defined $event_name) {
         $irc->yield( notice => $channel => "$event_name created successfully - ID $event_id");
     } else {
-        $irc->yield( notice => $channel => "Event could not be created - error $event_id");
+        $irc->yield( notice => $channel => "Event could not be created - $event_id");
     }
 
     # Restart the lag_o_meter

@@ -30,6 +30,12 @@ sub create {
 
     use Text::ParseWords;
     my ($event, @dates) = parse_line(' ', 0, $request);
+    splice( @dates, 12, );
+
+    my $count = @dates;
+    if ($count < 2) {
+        return "You must add at least two dates";
+    }
 
     my $events_ref  = tools::load_json_from_file($EVENTS_FILE);
     my $next_id     = calculate_next_id($events_ref);
@@ -38,7 +44,7 @@ sub create {
         EVENT   => tools::untaint($event),
         OWNER   => $nick,
         CHANNEL => $channel,
-        DATES   => check_dates( @dates[0 .. 11] ),
+        DATES   => check_dates( @dates ),
         STATUS  => 'CREATED',
     };
 
