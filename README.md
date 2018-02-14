@@ -1,8 +1,8 @@
 # slugrat
 
-Proposal for an IRC Event Organiser
+A basic IRC Event Organiser
 
-**THIS IS A PROPOSAL ONLY - THERE IS NO CODE**
+**ALPHA RELEASE**
 
 
 ## Help Commands
