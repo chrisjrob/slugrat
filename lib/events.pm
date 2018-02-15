@@ -22,8 +22,6 @@ our %EXPORT_TAGS = (
     DEFAULT => [@functions],
     ALL     => [@functions],
 );
-our $EVENTS_FILE = 'events.json';
-our $VOTES_FILE  = 'votes.csv';
 
 sub create {
     my ($channel, $nick, $request) = @_;
@@ -37,7 +35,7 @@ sub create {
         return "You must add at least two dates";
     }
 
-    my $events_ref  = tools::load_json_from_file($EVENTS_FILE);
+    my $events_ref  = tools::load_json_from_file("data/${channel}_events.json");
     my $next_id     = calculate_next_id($events_ref);
 
     my $event_ref = {
@@ -50,7 +48,7 @@ sub create {
 
     $events_ref->{$next_id} = $event_ref;
 
-    my $response = tools::write_data_to_json_file($EVENTS_FILE, $events_ref);
+    my $response = tools::write_data_to_json_file("data/${channel}_events.json", $events_ref);
 
     if ($response == 1) {
         # File written successfully - return event id
@@ -66,7 +64,7 @@ sub edit {
     use Text::ParseWords;
     my ($event_id, $event_name, @dates) = parse_line(' ', 0, $request);
 
-    my $events_ref  = tools::load_json_from_file($EVENTS_FILE);
+    my $events_ref  = tools::load_json_from_file("data/${channel}_events.json");
 
     if (not defined $events_ref->{ $event_id }) {
         return(0, "Event ID $event_id not found");
@@ -99,7 +97,7 @@ sub edit {
 
     $events_ref->{ $event_id } = $event_ref;
 
-    my $response = tools::write_data_to_json_file($EVENTS_FILE, $events_ref);
+    my $response = tools::write_data_to_json_file("data/${channel}_events.json", $events_ref);
 
     if ($response == 1) {
         # File written successfully - return event id
@@ -118,7 +116,7 @@ sub list {
     }
     $status = uc( $status );
 
-    my $events_ref  = tools::load_json_from_file($EVENTS_FILE);
+    my $events_ref  = tools::load_json_from_file("data/${channel}_events.json");
 
     my $filtered_ref = filter_by($events_ref, {
         STATUS  => $status,
@@ -135,7 +133,7 @@ sub delete {
         return(0, "Please specify the event ID to be deleted");
     }
 
-    my $events_ref  = tools::load_json_from_file($EVENTS_FILE);
+    my $events_ref  = tools::load_json_from_file("data/${channel}_events.json");
 
     my $response = 0;
     my $message  = "Event $request not found";
@@ -159,7 +157,7 @@ sub delete {
         return($response, $message);
     }
 
-    $response = tools::write_data_to_json_file($EVENTS_FILE, \%remaining);
+    $response = tools::write_data_to_json_file("data/${channel}_events.json", \%remaining);
 
     if ($response == 1) {
         return(1, $message);
@@ -176,7 +174,7 @@ sub detail {
         return(0, "Please specify the event ID to show");
     }
 
-    my $events_ref  = tools::load_json_from_file($EVENTS_FILE);
+    my $events_ref  = tools::load_json_from_file("data/${channel}_events.json");
     my $scores_ref  = scores_by_date( $channel );
 
     if (defined $events_ref->{ $request }) {
@@ -193,7 +191,7 @@ sub eopen {
         return(0, "Please specify the event ID to open");
     }
 
-    my $events_ref  = tools::load_json_from_file($EVENTS_FILE);
+    my $events_ref  = tools::load_json_from_file("data/${channel}_events.json");
 
     if (not defined $events_ref->{ $request }) {
         return(0, "Event $request not found.");
@@ -203,7 +201,7 @@ sub eopen {
 
     $events_ref->{ $request }{STATUS} = 'OPEN';
 
-    my $response = tools::write_data_to_json_file($EVENTS_FILE, $events_ref);
+    my $response = tools::write_data_to_json_file("data/${channel}_events.json", $events_ref);
 
     if ($response == 1) {
         return(1, "Event $request now open");
@@ -220,7 +218,7 @@ sub eclose {
         return(0, "Please specify the event ID to close");
     }
 
-    my $events_ref  = tools::load_json_from_file($EVENTS_FILE);
+    my $events_ref  = tools::load_json_from_file("data/${channel}_events.json");
 
     if (not defined $events_ref->{ $request }) {
         return(0, "Event ID not found");
@@ -228,7 +226,7 @@ sub eclose {
 
     $events_ref->{ $request }{STATUS} = 'CLOSED';
 
-    my $response = tools::write_data_to_json_file($EVENTS_FILE, $events_ref);
+    my $response = tools::write_data_to_json_file("data/${channel}_events.json", $events_ref);
 
     if ($response == 1) {
         return(1, "Event $request now closed");
@@ -253,7 +251,7 @@ sub accept {
     my ($event_id, @date_ids) = split("", $request);
 
     # Check event ID exists
-    my $events_ref  = tools::load_json_from_file($EVENTS_FILE);
+    my $events_ref  = tools::load_json_from_file("data/${channel}_events.json");
     if (not defined $events_ref->{ $event_id }) {
         return(0, "Event $event_id not found");
     } elsif ( $events_ref->{ $event_id }{STATUS} ne 'OPEN' ) {
@@ -298,8 +296,14 @@ sub scores_by_date {
 sub load_scores_for_channel {
     my $channel = shift;
 
-    open(my $fh_votes, '<', $VOTES_FILE) 
-        or die "Cannot read from $VOTES_FILE: $!";
+    my $filename = "data/${channel}_votes.csv";
+
+    if (! -e $filename) {
+        return;
+    }
+
+    open(my $fh_votes, '<', $filename) 
+        or die "Cannot read from $filename $!";
 
     my %scores;
     while ( defined(my $line = <$fh_votes>) ) {
@@ -312,7 +316,7 @@ sub load_scores_for_channel {
         $scores{ $evid }{ $nick } = \@dates;
     }
 
-    close($fh_votes) or die "Cannot close $VOTES_FILE: $!";
+    close($fh_votes) or die "Cannot close $filename $!";
 
     return \%scores;
 }
@@ -359,12 +363,14 @@ sub join_with_comma_and {
 sub append_vote {
     my ($channel, $nick, $event_id, $dates) = @_;
 
-    open(my $fh_votes, ">>", $VOTES_FILE) 
-        or die "Cannot write to $VOTES_FILE: $!";
+    my $filename = "data/${channel}_votes.csv";
+
+    open(my $fh_votes, ">>", $filename) 
+        or die "Cannot write to $filename $!";
 
     print $fh_votes "$channel,$nick,$event_id,$dates\n";
 
-    close($fh_votes) or die "Cannot close $VOTES_FILE: $!";
+    close($fh_votes) or die "Cannot close $filename: $!";
 
     return;
 }
