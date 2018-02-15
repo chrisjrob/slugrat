@@ -246,16 +246,18 @@ sub eclose {
 sub accept {
     my ($channel, $nick, $request) = @_;
 
-    # Check valid request
-    if ($request !~ /^[0-9]+(?:[A-Za-z\s]+)?$/) {
+    my ($event_id, $date_str);
+    if ($request =~ /^([0-9]+)([A-Za-z\s,]+)?$/) {
+        ($event_id, $date_str) = ($1, $2);
+    } else {
         return(0, "Please enter in format: 1 A B C (spaces optional).");
     }
 
-    # Make request consistent format 1ABC
-    $request =~ tr/a-z/A-Z/;
-    $request =~ s/\s*//g;
+    # Make request consistent format ABC
+    $date_str =~ tr/a-z/A-Z/;
+    $date_str =~ s/[\s,]*//g;
 
-    my ($event_id, @date_ids) = split("", $request);
+    my @date_ids = split("", $date_str);
 
     # Check event ID exists
     my $events_ref  = tools::load_json_from_file("data/${channel}_events.json");
