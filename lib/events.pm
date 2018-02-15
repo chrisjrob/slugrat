@@ -59,7 +59,7 @@ sub create {
 }
 
 sub edit {
-    my ($channel, $nick, $request) = @_;
+    my ($channel, $nick, $request, $isop) = @_;
 
     use Text::ParseWords;
     my ($event_id, $event_name, @dates) = parse_line(' ', 0, $request);
@@ -70,7 +70,7 @@ sub edit {
         return(0, "Event ID $event_id not found");
     } elsif ($channel ne $events_ref->{ $event_id }{CHANNEL}) {
         return(0, "You must be in the event's channel");
-    } elsif ($nick ne $events_ref->{ $event_id }{OWNER}) {
+    } elsif ( ($nick ne $events_ref->{ $event_id }{OWNER}) and (not $isop) ) {
         return(0, "You are not the owner of event $event_id");
     }
 
@@ -127,7 +127,7 @@ sub list {
 }
 
 sub delete {
-    my ($channel, $nick, $request) = @_;
+    my ($channel, $nick, $request, $isop) = @_;
 
     unless ($request =~ /^\d+$/) {
         return(0, "Please specify the event ID to be deleted");
@@ -140,14 +140,17 @@ sub delete {
 
     my %remaining;
     foreach my $event_id (keys %{ $events_ref }) {
-        if ( ($event_id == $request) and ($channel eq $events_ref->{ $event_id }{CHANNEL}) and ($nick eq $events_ref->{ $event_id }{OWNER}) ) {
+        if ( ($event_id == $request) 
+                and ($channel eq $events_ref->{ $event_id }{CHANNEL}) 
+                and ( ($nick eq $events_ref->{ $event_id }{OWNER}) or ($isop) )
+        ) {
             # Skip record to delete it
             $response = 1;
             $message  = "Event $event_id deleted successfully.";
         } elsif ($event_id == $request) {
             $remaining{ $event_id } = $events_ref->{ $event_id };
             $response = 0;
-            $message  = "You must be in the event channel and be the event owner to delete it.";
+            $message  = "You must be in the event channel and be the event owner or an operator to delete it.";
         } else {
             $remaining{ $event_id } = $events_ref->{ $event_id };
         }
@@ -185,7 +188,7 @@ sub detail {
 }
 
 sub eopen {
-    my ($channel, $nick, $request) = @_;
+    my ($channel, $nick, $request, $isop) = @_;
 
     unless ($request =~ /^\d+$/) {
         return(0, "Please specify the event ID to open");
@@ -197,6 +200,8 @@ sub eopen {
         return(0, "Event $request not found.");
     } elsif ( $events_ref->{ $request }{STATUS} eq 'OPEN' ) {
         return(0, "Event $request is already open.");
+    } elsif ( ( $events_ref->{ $request }{OWNER} ne $nick ) and (not $isop) ) {
+        return(0, "Only the event owner or an operator can do that.");
     }
 
     $events_ref->{ $request }{STATUS} = 'OPEN';
@@ -212,7 +217,7 @@ sub eopen {
 }
 
 sub eclose {
-    my ($channel, $nick, $request) = @_;
+    my ($channel, $nick, $request, $isop) = @_;
 
     unless ($request =~ /^\d+$/) {
         return(0, "Please specify the event ID to close");
@@ -222,6 +227,8 @@ sub eclose {
 
     if (not defined $events_ref->{ $request }) {
         return(0, "Event ID not found");
+    } elsif ( ( $events_ref->{ $request }{OWNER} ne $nick ) and (not $isop) ) {
+        return(0, "Only the event owner or an operator can do that.");
     }
 
     $events_ref->{ $request }{STATUS} = 'CLOSED';
@@ -352,7 +359,6 @@ sub join_with_comma_and {
 
     my $dates = join(', ', @dates);
 
-    my $count = @dates;
     if ($count > 1) {
         $dates =~ s/,\s([^,]+)$/ and $1/;
     }

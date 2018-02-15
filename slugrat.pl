@@ -285,7 +285,9 @@ sub irc_botcmd_edit {
     my ($kernel, $who, $channel, $request) = @_[KERNEL, ARG0 .. ARG2];
     my $nick            = ( split /!/, $who )[0];
 
-    my ($event_id, $event_name) = events::edit($channel, $nick, $request);
+    my $isop = is_op($channel, $nick);
+
+    my ($event_id, $event_name) = events::edit($channel, $nick, $request, $isop);
 
     if ( ($event_id != 0) and (defined $event_name) ) {
         $irc->yield( notice => $channel => "$event_name updated successfully - ID $event_id");
@@ -334,7 +336,9 @@ sub irc_botcmd_delete {
     my ($kernel, $who, $channel, $request) = @_[KERNEL, ARG0 .. ARG2];
     my $nick            = ( split /!/, $who )[0];
 
-    my ($response, $message) = events::delete($channel, $nick, $request);
+    my $isop = is_op($channel, $nick);
+
+    my ($response, $message) = events::delete($channel, $nick, $request, $isop);
     $irc->yield( notice => $channel => $message);
 
     # Restart the lag_o_meter
@@ -426,7 +430,9 @@ sub irc_botcmd_open {
     my ($kernel, $who, $channel, $request) = @_[KERNEL, ARG0 .. ARG2];
     my $nick            = ( split /!/, $who )[0];
 
-    my ($response, $message) = events::eopen($channel, $nick, $request);
+    my $isop = is_op($channel, $nick);
+
+    my ($response, $message) = events::eopen($channel, $nick, $request, $isop);
     $irc->yield( notice => $channel => $message);
 
     # Restart the lag_o_meter
@@ -442,7 +448,9 @@ sub irc_botcmd_close {
     my ($kernel, $who, $channel, $request) = @_[KERNEL, ARG0 .. ARG2];
     my $nick            = ( split /!/, $who )[0];
 
-    my ($response, $message) = events::eclose($channel, $nick, $request);
+    my $isop = is_op($channel, $nick);
+
+    my ($response, $message) = events::eclose($channel, $nick, $request, $isop);
     $irc->yield( notice => $channel => $message);
 
     # Restart the lag_o_meter
