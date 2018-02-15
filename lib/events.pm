@@ -163,6 +163,7 @@ sub delete {
     $response = tools::write_data_to_json_file("data/${channel}_events.json", \%remaining);
 
     if ($response == 1) {
+        purge_votes_for_event( $channel, $request );
         return(1, $message);
     } else {
         return(0, "Events data was not saved: $response");
@@ -443,3 +444,35 @@ sub calculate_next_id {
 
     return $last_id;
 }
+
+sub purge_votes_for_event {
+    my ($channel, $event_id) = @_;
+
+    my $filename    = "data/${channel}_votes.csv";
+    my $tempfile    = "$filename.temp";
+
+    open(my $fh_votes, "<", $filename) 
+        or die "Cannot read from $filename $!";
+
+    open(my $fh_temp, ">", $tempfile) 
+        or die "Cannot write to $tempfile $!";
+
+    while ( defined(my $line = <$fh_votes>) ) {
+        chomp($line);
+        my ($chan, $nick, $evid, @dates) = split(',', $line);
+
+        if ($evid == $event_id) {
+            # skip
+        } else {
+            print $fh_temp "$line\n";
+        }
+    }
+
+    close($fh_temp) or die "Cannot close $tempfile $!";
+    close($fh_votes) or die "Cannot close $filename: $!";
+
+    rename($tempfile, $filename) or die "Cannot rename $tempfile to $filename: $!";
+
+    return;
+}
+
