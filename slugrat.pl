@@ -320,8 +320,13 @@ sub irc_botcmd_list {
     }
 
     foreach my $event_id (sort keys %{ $events_ref }) {
-        my $dates = join(" ", @{ $events_ref->{ $event_id }{DATES} });
-        $irc->yield( notice => $channel => "$event_id \"$events_ref->{ $event_id }{EVENT}\" $dates ($events_ref->{ $event_id }{STATUS})");
+        if ($events_ref->{ $event_id }{STATUS} eq 'SCHEDULED') {
+            my $dates = join(" ", @{ $events_ref->{ $event_id }{SCHEDULED} });
+            $irc->yield( notice => $channel => "$event_id \"$events_ref->{ $event_id }{EVENT}\" $dates ($events_ref->{ $event_id }{STATUS})");
+        } else {
+            my $dates = join(" ", @{ $events_ref->{ $event_id }{DATES} });
+            $irc->yield( notice => $channel => "$event_id \"$events_ref->{ $event_id }{EVENT}\" $dates ($events_ref->{ $event_id }{STATUS})");
+        }
     }
 
     # Restart the lag_o_meter
@@ -364,11 +369,20 @@ sub irc_botcmd_show {
         return;
     }
 
+    my $scheduled_ref = scheduled_dates( $event_ref->{SCHEDULED} );
+
     my $char = 65;
     foreach my $date (sort @{ $event_ref->{DATES} }) {
         my $score = keys @{ $scores_ref->{ $event_id }{ $date } };
         my $votes = ($score == 1) ? 'vote' : 'votes';
-        $irc->yield( notice => $channel => chr($char) . " - $event_ref->{EVENT} on $date - $score $votes" );
+
+        # Add (SCHEDULED) tag if scheduled
+        my $scheduled = '';
+        if ($event_ref->{STATUS} eq 'SCHEDULED') {
+            $scheduled = $scheduled_ref->{ $date };
+        }
+
+        $irc->yield( notice => $channel => chr($char) . " - $event_ref->{EVENT} on $date - $score $votes $scheduled" );
         $char++;
     }
 
@@ -576,5 +590,21 @@ sub is_op {
   }
 
   return 0;
+}
+
+sub scheduled_dates {
+    my $dates = shift;
+
+    my $count = @{ $dates };
+    if ($count == 0) {
+        return;
+    }
+
+    my %scheduled;
+    foreach my $date (@{ $dates }) {
+        $scheduled{$date} = '(SCHEDULED)';
+    }
+
+    return \%scheduled;
 }
 
