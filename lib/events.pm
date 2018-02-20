@@ -77,8 +77,8 @@ sub edit {
         return(0, "You must be in the event's channel");
     } elsif ( ($nick ne $events_ref->{ $event_id }{OWNER}) and (not $isop) ) {
         return(0, "You are not the owner of event $event_id");
-    } elsif ($events_ref->{ $event_id }{STATUS} eq 'OPEN') {
-        return(0, "The event is currently open and cannot be edited");
+    } elsif ($events_ref->{ $event_id }{STATUS} =~ /^(OPEN|SCHEDULED)$/) {
+        return(0, "The event is currently $1 and cannot be edited");
     }
 
     my $count = @dates;
@@ -120,14 +120,21 @@ sub list {
     my $channel = shift;
     my $request = shift;
 
-    my $status = 'OPEN';
+    # Statuses to include by default
+    my $status = 'OPEN|SCHEDULED';
+
+    # Show all events if event id not specified
     my $event_id = 'ALL';
 
+    # Event ID specified
     if ($request =~ /^\s*(\d+)$/) {
         $event_id   = $1;
         $status     = 'ALL';
+
+    # Status specified
     } elsif ($request =~ /^([A-Za-z]+)$/) {
         $status = requested_status($1);
+
     }
 
     my $events_ref  = tools::load_json_from_file("data/${channel}_events.json");
@@ -546,16 +553,24 @@ sub filter_by {
 
     my %filtered;
     foreach my $event_id (sort keys %{ $events_ref }) {
-        if ( (defined $filters_ref->{STATUS}) and ($filters_ref->{STATUS} ne 'ALL') and ($events_ref->{ $event_id }{STATUS} ne $filters_ref->{STATUS}) ) {
+        if ( (defined $filters_ref->{STATUS}) 
+                and ($filters_ref->{STATUS} ne 'ALL') 
+                and ($events_ref->{ $event_id }{STATUS} !~ /^(?:$filters_ref->{STATUS})$/) ) {
             next;
         }
-        if ( (defined $filters_ref->{OWNER}) and ($filters_ref->{OWNER} ne 'ALL') and ($events_ref->{ $event_id }{OWNER} ne $filters_ref->{OWNER}) ) {
+        if ( (defined $filters_ref->{OWNER}) 
+                and ($filters_ref->{OWNER} ne 'ALL') 
+                and ($events_ref->{ $event_id }{OWNER} ne $filters_ref->{OWNER}) ) {
             next;
         }
-        if ( (defined $filters_ref->{CHANNEL}) and ($filters_ref->{CHANNEL} ne 'ALL') and ($events_ref->{ $event_id }{CHANNEL} ne $filters_ref->{CHANNEL}) ) {
+        if ( (defined $filters_ref->{CHANNEL}) 
+                and ($filters_ref->{CHANNEL} ne 'ALL') 
+                and ($events_ref->{ $event_id }{CHANNEL} ne $filters_ref->{CHANNEL}) ) {
             next;
         }
-        if ( (defined $filters_ref->{EVENT}) and ($filters_ref->{EVENT} ne 'ALL') and ($event_id ne $filters_ref->{EVENT}) ) {
+        if ( (defined $filters_ref->{EVENT}) 
+                and ($filters_ref->{EVENT} ne 'ALL') 
+                and ($event_id ne $filters_ref->{EVENT}) ) {
             next;
         }
         $filtered{ $event_id } = $events_ref->{ $event_id };
