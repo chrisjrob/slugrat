@@ -292,7 +292,7 @@ sub irc_botcmd_edit {
     if ( ($event_id != 0) and (defined $event_name) ) {
         $irc->yield( notice => $channel => "$event_name updated successfully - ID $event_id");
     } else {
-        $irc->yield( notice => $channel => "Event could not be updated - error $event_id");
+        $irc->yield( notice => $channel => "Event could not be updated: $event_name");
     }
 
     # Restart the lag_o_meter

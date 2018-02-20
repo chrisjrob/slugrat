@@ -72,6 +72,8 @@ sub edit {
         return(0, "You must be in the event's channel");
     } elsif ( ($nick ne $events_ref->{ $event_id }{OWNER}) and (not $isop) ) {
         return(0, "You are not the owner of event $event_id");
+    } elsif ($events_ref->{ $event_id }{STATUS} eq 'OPEN') {
+        return(0, "The event is currently open and cannot be edited");
     }
 
     my $count = @dates;
