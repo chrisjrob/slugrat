@@ -23,6 +23,8 @@ our %EXPORT_TAGS = (
     ALL     => [@functions],
 );
 
+# Create an event from a name followed by a list of dates
+#
 sub create {
     my ($channel, $nick, $request) = @_;
 
@@ -58,6 +60,9 @@ sub create {
     }
 }
 
+# Edit an existing event from 
+# event_id "name of event" list of dates
+#
 sub edit {
     my ($channel, $nick, $request, $isop) = @_;
 
@@ -109,6 +114,8 @@ sub edit {
     }
 }
 
+# List events in format required by edit function
+#
 sub list {
     my $channel = shift;
     my $request = shift;
@@ -134,135 +141,131 @@ sub list {
     return $filtered_ref;
 }
 
-sub requested_status {
-    my $request = shift;
-
-    my $status = 'OPEN';
-    if ($request =~ /^\s*(all|created|open|closed)\s*$/i) {
-        $status = uc($request);
-    }
-        
-    return $status;
-}
-
+# Delete event
+#
 sub delete {
     my ($channel, $nick, $request, $isop) = @_;
 
-    unless ($request =~ /^\d+$/) {
+    my $event_id = tools::untaint($request);
+
+    unless ($event_id =~ /^\d+$/) {
         return(0, "Please specify the event ID to be deleted");
     }
 
     my $events_ref  = tools::load_json_from_file("data/${channel}_events.json");
 
-    my $response = 0;
-    my $message  = "Event $request not found";
-
-    my %remaining;
-    foreach my $event_id (keys %{ $events_ref }) {
-        if ( ($event_id == $request) 
-                and ($channel eq $events_ref->{ $event_id }{CHANNEL}) 
-                and ( ($nick eq $events_ref->{ $event_id }{OWNER}) or ($isop) )
-        ) {
-            # Skip record to delete it
-            $response = 1;
-            $message  = "Event $event_id deleted successfully.";
-        } elsif ($event_id == $request) {
-            $remaining{ $event_id } = $events_ref->{ $event_id };
-            $response = 0;
-            $message  = "You must be in the event channel and be the event owner or an operator to delete it.";
-        } else {
-            $remaining{ $event_id } = $events_ref->{ $event_id };
-        }
+    # Pre-delete validations
+    if (not defined $events_ref->{ $event_id }) {
+        return(0, "Event ID $event_id not found");
+    } elsif ($channel ne $events_ref->{ $event_id }{CHANNEL}) {
+        return(0, "You must be in the event's channel");
+    } elsif ( ($nick ne $events_ref->{ $event_id }{OWNER}) and (not $isop) ) {
+        return(0, "You are not the owner of event $event_id");
+    } elsif ($events_ref->{ $event_id }{STATUS} ne 'CLOSED') {
+        return(0, "The event $event_id is not yet closed");
     }
 
-    if ($response == 0) {
-        return($response, $message);
-    }
+    delete $events_ref->{ $event_id };
 
-    $response = tools::write_data_to_json_file("data/${channel}_events.json", \%remaining);
+    my $response = tools::write_data_to_json_file("data/${channel}_events.json", $events_ref);
 
     if ($response == 1) {
-        purge_votes_for_event( $channel, $request );
-        return(1, $message);
+        purge_votes_for_event( $channel, $event_id );
+        return(1, "Event $event_id deleted successfully");
     } else {
         return(0, "Events data was not saved: $response");
     }
 
 }
 
+# Return detail for event
+# as list of dates with scores against each
+#
 sub detail {
     my ($channel, $nick, $request) = @_;
 
-    unless ($request =~ /^\d+$/) {
-        return(0, "Please specify the event ID to show");
+    my $event_id = tools::untaint($request);
+
+    unless ($event_id =~ /^\d+$/) {
+        return(0, "Please specify the event ID");
     }
 
     my $events_ref  = tools::load_json_from_file("data/${channel}_events.json");
     my $scores_ref  = scores_by_date( $channel );
 
-    if (defined $events_ref->{ $request }) {
-        return($request, $events_ref->{ $request }, $scores_ref);
+    if (defined $events_ref->{ $event_id }) {
+        return($request, $events_ref->{ $event_id }, $scores_ref);
     } else {
-        return(0, "Event ID not found");
+        return(0, "Event ID $event_id not found");
     }
 }
 
+# Open event for voting
+#
 sub eopen {
     my ($channel, $nick, $request, $isop) = @_;
 
-    unless ($request =~ /^\d+$/) {
+    my $event_id = tools::untaint($request);
+
+    unless ($event_id =~ /^\d+$/) {
         return(0, "Please specify the event ID to open");
     }
 
     my $events_ref  = tools::load_json_from_file("data/${channel}_events.json");
 
-    if (not defined $events_ref->{ $request }) {
-        return(0, "Event $request not found.");
-    } elsif ( $events_ref->{ $request }{STATUS} eq 'OPEN' ) {
-        return(0, "Event $request is already open.");
-    } elsif ( ( $events_ref->{ $request }{OWNER} ne $nick ) and (not $isop) ) {
+    if (not defined $events_ref->{ $event_id }) {
+        return(0, "Event $event_id not found.");
+    } elsif ( $events_ref->{ $event_id }{STATUS} eq 'OPEN' ) {
+        return(0, "Event $event_id is already open.");
+    } elsif ( ( $events_ref->{ $event_id }{OWNER} ne $nick ) and (not $isop) ) {
         return(0, "Only the event owner or an operator can do that.");
     }
 
-    $events_ref->{ $request }{STATUS} = 'OPEN';
+    $events_ref->{ $event_id }{STATUS} = 'OPEN';
 
     my $response = tools::write_data_to_json_file("data/${channel}_events.json", $events_ref);
 
     if ($response == 1) {
-        return(1, "Event $request now open");
+        return(1, "Event $event_id now open");
     } else {
         return(0, "Events data was not saved: $response");
     }
 
 }
 
+# Close event for voting
+#
 sub eclose {
     my ($channel, $nick, $request, $isop) = @_;
 
-    unless ($request =~ /^\d+$/) {
+    my $event_id = tools::untaint($request);
+
+    unless ($event_id =~ /^\d+$/) {
         return(0, "Please specify the event ID to close");
     }
 
     my $events_ref  = tools::load_json_from_file("data/${channel}_events.json");
 
-    if (not defined $events_ref->{ $request }) {
+    if (not defined $events_ref->{ $event_id }) {
         return(0, "Event ID not found");
-    } elsif ( ( $events_ref->{ $request }{OWNER} ne $nick ) and (not $isop) ) {
+    } elsif ( ( $events_ref->{ $event_id }{OWNER} ne $nick ) and (not $isop) ) {
         return(0, "Only the event owner or an operator can do that.");
     }
 
-    $events_ref->{ $request }{STATUS} = 'CLOSED';
+    $events_ref->{ $event_id }{STATUS} = 'CLOSED';
 
     my $response = tools::write_data_to_json_file("data/${channel}_events.json", $events_ref);
 
     if ($response == 1) {
-        return(1, "Event $request now closed");
+        return(1, "Event $event_id now closed");
     } else {
         return(0, "Events data was not saved: $response");
     }
 
 }
 
+# User vote
+#
 sub accept {
     my ($channel, $nick, $request) = @_;
 
@@ -308,8 +311,10 @@ sub accept {
 
 }
 
+# Select final date
+#
 sub select {
-    my ($channel, $nick, $request) = @_;
+    my ($channel, $nick, $request, $isop) = @_;
 
     # Decipher user input from 12ABC
     my ($event_id, @date_ids) = read_event_date_input( $request );
@@ -318,14 +323,15 @@ sub select {
     # Load events 
     my $events_ref  = tools::load_json_from_file("data/${channel}_events.json");
 
-    # Check event ID exists
+    # Pre-select validations
     if (not defined $events_ref->{ $event_id }) {
-        return(0, "Event $event_id not found");
-    }
-
-    # Check event is closed
-    if ( $events_ref->{ $event_id }{STATUS} ne 'CLOSED' ) {
-        return(0, "Event $event_id is not yet closed");
+        return(0, "Event ID $event_id not found");
+    } elsif ($channel ne $events_ref->{ $event_id }{CHANNEL}) {
+        return(0, "You must be in the event's channel");
+    } elsif ( ($nick ne $events_ref->{ $event_id }{OWNER}) and (not $isop) ) {
+        return(0, "You are not the owner of event $event_id");
+    } elsif ($events_ref->{ $event_id }{STATUS} ne 'CLOSED') {
+        return(0, "The event $event_id is not yet closed");
     }
 
     # Generate a list of dates from the input date ids
@@ -351,6 +357,25 @@ sub select {
         return(0, "Your date choices were not saved: $response");
     }
 
+}
+
+
+################################## INTERNAL FUNCTIONS ###################################
+
+
+# Accepts requested status and returns either
+# untainted and validated input or 
+# returns OPEN - i.e. default status
+#
+sub requested_status {
+    my $request = shift;
+
+    my $status = 'OPEN';
+    if ($request =~ /^\s*(all|created|open|closed)\s*$/i) {
+        $status = uc($1);
+    }
+        
+    return $status;
 }
 
 # Return a date list by checking 
@@ -385,6 +410,7 @@ sub list_dates_from_ids {
 sub read_event_date_input {
     my $request = shift;
 
+    # Untaint and split
     my ($event_id, $date_str);
     if ($request =~ /^([0-9]+)([A-Za-z\s,]+)?$/) {
         ($event_id, $date_str) = ($1, $2);
@@ -401,6 +427,9 @@ sub read_event_date_input {
     return( $event_id, @date_ids );
 }
 
+# Accepts an Event ID and
+# return a hash ref of scores by date
+#
 sub scores_by_date {
     my ($channel, $event_id) = @_;
     
@@ -410,6 +439,10 @@ sub scores_by_date {
     return $scores_by_date_ref;
 }
 
+# Loads all scores from CSV
+# earlier votes are overwritten by later votes
+# returns hash ref
+#
 sub load_scores_for_channel {
     my $channel = shift;
 
@@ -438,6 +471,9 @@ sub load_scores_for_channel {
     return \%scores;
 }
 
+# Accept scores hash ref by nick 
+# return scores hash ref by date
+#
 sub map_scores_by_date {
     my $scores_ref = shift;    
 
@@ -454,8 +490,6 @@ sub map_scores_by_date {
 
 }
 
-
-# Internal functions
 
 # Join array in format a, b and c
 # 

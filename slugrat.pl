@@ -500,7 +500,9 @@ sub irc_botcmd_select {
     my ($kernel, $who, $channel, $request) = @_[KERNEL, ARG0 .. ARG2];
     my $nick            = ( split /!/, $who )[0];
 
-    my ($response, $message) = events::select($channel, $nick, $request);
+    my $isop = is_op($channel, $nick);
+
+    my ($response, $message) = events::select($channel, $nick, $request, $isop);
     $irc->yield( notice => $channel => $message);
 
     # Restart the lag_o_meter
