@@ -127,7 +127,7 @@ sub _start {
             Commands => {
                 ignore      => 'Maintain nick ignore list for bots - takes two arguments - add|del|list <nick>',
                 add         => "To add an event, use: $botnick: add \"Name of event\" <ISO Date 1> <ISO Date 2> ...",
-                list        => "To list all events, use: $botnick: list <all|created|open|closed>",
+                list        => "To list all events, use: $botnick: list <all|created|open|closed|event id>",
                 delete      => "To delete an event, use: $botnick: delete <event id>",
                 show        => "To show the detail for an event, use: $botnick: show <event id>",
                 edit        => "To edit an event, use: $botnick: edit <event id> \"Name of Event\" <ISO Date 1> <ISO Date 2> ...",
@@ -309,8 +309,7 @@ sub irc_botcmd_list {
     my ($kernel, $who, $channel, $request) = @_[KERNEL, ARG0 .. ARG2];
 
     my $nick        = ( split /!/, $who )[0];
-    my $status      = requested_status($request);
-    my $events_ref  = events::list($channel, $status);
+    my $events_ref  = events::list($channel, $request);
     my $count       = keys %{ $events_ref };
 
     if ($count == 0) {
@@ -319,7 +318,8 @@ sub irc_botcmd_list {
     }
 
     foreach my $event_id (sort keys %{ $events_ref }) {
-        $irc->yield( notice => $channel => "$event_id - $events_ref->{ $event_id }{EVENT} ($events_ref->{ $event_id }{STATUS})");
+        my $dates = join(" ", @{ $events_ref->{ $event_id }{DATES} });
+        $irc->yield( notice => $channel => "$event_id \"$events_ref->{ $event_id }{EVENT}\" $dates ($events_ref->{ $event_id }{STATUS})");
     }
 
     # Restart the lag_o_meter
@@ -558,13 +558,3 @@ sub is_op {
   return 0;
 }
 
-sub requested_status {
-    my $request = shift;
-
-    my $status = 'OPEN';
-    if ($request =~ /^\s*(all|created|open|closed)\s*$/i) {
-        $status = uc($request);
-    }
-        
-    return $status;
-}

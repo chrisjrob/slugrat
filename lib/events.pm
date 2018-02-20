@@ -109,21 +109,38 @@ sub edit {
 
 sub list {
     my $channel = shift;
-    my $status  = shift;
+    my $request = shift;
 
-    if (not defined $status) {
-        $status = 'ALL';
+    my $status = 'OPEN';
+    my $event_id = 'ALL';
+
+    if ($request =~ /^\s*(\d+)$/) {
+        $event_id   = $1;
+        $status     = 'ALL';
+    } elsif ($request =~ /^([A-Za-z]+)$/) {
+        $status = requested_status($1);
     }
-    $status = uc( $status );
 
     my $events_ref  = tools::load_json_from_file("data/${channel}_events.json");
 
     my $filtered_ref = filter_by($events_ref, {
+        EVENT   => $event_id,
         STATUS  => $status,
         CHANNEL => $channel,
     });
 
     return $filtered_ref;
+}
+
+sub requested_status {
+    my $request = shift;
+
+    my $status = 'OPEN';
+    if ($request =~ /^\s*(all|created|open|closed)\s*$/i) {
+        $status = uc($request);
+    }
+        
+    return $status;
 }
 
 sub delete {
@@ -410,6 +427,9 @@ sub filter_by {
             next;
         }
         if ( (defined $filters_ref->{CHANNEL}) and ($filters_ref->{CHANNEL} ne 'ALL') and ($events_ref->{ $event_id }{CHANNEL} ne $filters_ref->{CHANNEL}) ) {
+            next;
+        }
+        if ( (defined $filters_ref->{EVENT}) and ($filters_ref->{EVENT} ne 'ALL') and ($event_id ne $filters_ref->{EVENT}) ) {
             next;
         }
         $filtered{ $event_id } = $events_ref->{ $event_id };

@@ -15,7 +15,7 @@ A basic IRC Event Organiser
 ### Help User Commands
 
     <johnbull> slugrat: help list
-    <slugrat> To list events, use: slugrat: list
+    <slugrat> To list events, use: slugrat: list {all|created|open|closed|Event ID}
 
     <johnbull> slugrat: help show
     <slugrat> To show an event, use: slugrat: show <number>
@@ -104,6 +104,8 @@ A basic IRC Event Organiser
 
 ### Amend dates and re-open event
 
+    <majorbull> slugrat: list 1
+    slugrat: 1 "Pub Meet" 2018-02-06 2018-02-13 2018-02-21 (CREATED)
     <majorbull> slugrat: edit 1 "Pub Meet" 2018-02-06 2018-02-21 2018-02-28
     <slugrat> majorbull: Event 1 "Pub Meet" edited successfully
     <slugrat> To open the event, use: slugrat: open 1
