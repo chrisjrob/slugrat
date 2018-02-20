@@ -595,6 +595,8 @@ sub is_op {
 sub scheduled_dates {
     my $dates = shift;
 
+    return unless ( (defined $dates) and (ref($dates) eq 'ARRAY') );
+
     my $count = @{ $dates };
     if ($count == 0) {
         return;
