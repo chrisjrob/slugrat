@@ -344,7 +344,9 @@ sub select {
     }
 
     # Add Scheduled dates
-    $events_ref->{ $event_id }{SCHEDULED} = \@dates;
+    $events_ref->{ $event_id }{STATUS}      = 'SCHEDULED';
+    $events_ref->{ $event_id }{SCHEDULED}   = \@dates;
+
     my $response = tools::write_data_to_json_file("data/${channel}_events.json", $events_ref);
 
     # Return confirmation message
