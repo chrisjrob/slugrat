@@ -266,28 +266,100 @@ sub eclose {
 sub accept {
     my ($channel, $nick, $request) = @_;
 
-    my ($event_id, $date_str);
-    if ($request =~ /^([0-9]+)([A-Za-z\s,]+)?$/) {
-        ($event_id, $date_str) = ($1, $2);
-    } else {
-        return(0, "Please enter in format: 1 A B C (spaces optional).");
-    }
+    # Decipher user input from 12ABC
+    my ($event_id, @date_ids) = read_event_date_input( $request );
+    return( $event_id, $date_ids[0] ) if ($event_id == 0);
 
-    # Make request consistent format ABC
-    $date_str =~ tr/a-z/A-Z/;
-    $date_str =~ s/[\s,]*//g;
-
-    my @date_ids = split("", $date_str);
+    # Load events as may be required in similar functions like select
+    my $events_ref  = tools::load_json_from_file("data/${channel}_events.json");
 
     # Check event ID exists
-    my $events_ref  = tools::load_json_from_file("data/${channel}_events.json");
     if (not defined $events_ref->{ $event_id }) {
         return(0, "Event $event_id not found");
-    } elsif ( $events_ref->{ $event_id }{STATUS} ne 'OPEN' ) {
+    }
+
+    # Check event is open
+    if ( $events_ref->{ $event_id }{STATUS} ne 'OPEN' ) {
         return(0, "Event $event_id is not yet open");
     }
 
-    my $dates_ref = map_dates($events_ref->{ $event_id }{DATES});
+    # Generate a list of dates from the input date ids
+    my @dates = list_dates_from_ids( $channel, $request, $events_ref, $event_id, @date_ids );
+ 
+    # Check there is at least one matching date
+    my $count = @dates;
+    if ($count == 0) {
+        return( 0, "No dates have been selected");
+    }
+
+    # Save vote
+    my $dates = join(',', @dates);
+    my $response = append_vote($channel,$nick,$event_id,$dates);
+
+    # Return confirmation message
+    $dates = join_with_comma_and(@dates);
+
+    if ($response == 1) {
+        # File written successfully - return event id
+        return(1, "You have accepted dates: $dates");
+    } else {
+        return(0, "Your date choices were not saved: $response");
+    }
+
+}
+
+sub select {
+    my ($channel, $nick, $request) = @_;
+
+    # Decipher user input from 12ABC
+    my ($event_id, @date_ids) = read_event_date_input( $request );
+    return( $event_id, $date_ids[0] ) if ($event_id == 0);
+
+    # Load events 
+    my $events_ref  = tools::load_json_from_file("data/${channel}_events.json");
+
+    # Check event ID exists
+    if (not defined $events_ref->{ $event_id }) {
+        return(0, "Event $event_id not found");
+    }
+
+    # Check event is closed
+    if ( $events_ref->{ $event_id }{STATUS} ne 'CLOSED' ) {
+        return(0, "Event $event_id is not yet closed");
+    }
+
+    # Generate a list of dates from the input date ids
+    my @dates = list_dates_from_ids( $channel, $request, $events_ref, $event_id, @date_ids );
+
+    # Check there is at least one matching date
+    my $count = @dates;
+    if ($count == 0) {
+        return(0, "No dates have been selected");
+    }
+
+    # Add Scheduled dates
+    $events_ref->{ $event_id }{SCHEDULED} = \@dates;
+    my $response = tools::write_data_to_json_file("data/${channel}_events.json", $events_ref);
+
+    # Return confirmation message
+    my $dates = join_with_comma_and(@dates);
+
+    if ($response == 1) {
+        # File written successfully - return event id
+        return(1, "You have selected dates: $dates");
+    } else {
+        return(0, "Your date choices were not saved: $response");
+    }
+
+}
+
+# Return a date list by checking 
+# event dates against input date ids
+#
+sub list_dates_from_ids {
+    my ($channel, $request, $events_ref, $event_id, @date_ids) = @_;
+
+    my $dates_ref = dates_by_id($events_ref->{ $event_id }{DATES});
 
     my @dates;
     if ($request =~ /^\d+\s*(?:any|all)$/i) {
@@ -304,13 +376,29 @@ sub accept {
         }
     }
 
-    my $dates = join(',', @dates);
+    return @dates;
+}
 
-    append_vote($channel,$nick,$event_id,$dates);
+# Take 1ABC request 
+# Return 1, A, B, C
+#
+sub read_event_date_input {
+    my $request = shift;
 
-    $dates = join_with_comma_and(@dates);
+    my ($event_id, $date_str);
+    if ($request =~ /^([0-9]+)([A-Za-z\s,]+)?$/) {
+        ($event_id, $date_str) = ($1, $2);
+    } else {
+        return(0, "Please enter in format: 1 A B C (spaces optional).");
+    }
 
-    return(1, "You have accepted dates: $dates");
+    # Make request consistent format ABC
+    $date_str =~ tr/a-z/A-Z/;
+    $date_str =~ s/[\s,]*//g;
+
+    my @date_ids = split("", $date_str);
+
+    return( $event_id, @date_ids );
 }
 
 sub scores_by_date {
@@ -400,10 +488,10 @@ sub append_vote {
 
     close($fh_votes) or die "Cannot close $filename: $!";
 
-    return;
+    return 1;
 }
 
-sub map_dates {
+sub dates_by_id {
     my $dates_ref = shift;
 
     my %dates;

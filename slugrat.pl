@@ -76,6 +76,7 @@ POE::Session->create(
             irc_botcmd_accept
             irc_botcmd_reject
             irc_botcmd_voters
+            irc_botcmd_select
         ) ],
     ],
     heap => { irc => $irc },
@@ -136,6 +137,7 @@ sub _start {
                 accept      => "To accept an event, use: $botnick: accept <event id> <A> <B>",
                 reject      => "To reject all dates for an event, use: $botnick: reject <event id>",
                 voters      => "To view the voters for an event, use: $botnick: voters <event id>",
+                select      => "To select final dates for an event, use: $botnick: select event id> <A> <B>",
             },
             In_channels     => 1,
             In_private      => $CONF->param('private'),
@@ -483,6 +485,22 @@ sub irc_botcmd_reject {
     my $nick            = ( split /!/, $who )[0];
 
     my ($response, $message) = events::accept($channel, $nick, $request);
+    $irc->yield( notice => $channel => $message);
+
+    # Restart the lag_o_meter
+    $kernel->delay( 'lag_o_meter' => $LAG );
+
+    return;
+}
+
+# Select final dates for event
+# <majorbull> slugrat: select <event id> A B C
+#
+sub irc_botcmd_select {
+    my ($kernel, $who, $channel, $request) = @_[KERNEL, ARG0 .. ARG2];
+    my $nick            = ( split /!/, $who )[0];
+
+    my ($response, $message) = events::select($channel, $nick, $request);
     $irc->yield( notice => $channel => $message);
 
     # Restart the lag_o_meter
