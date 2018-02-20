@@ -373,7 +373,7 @@ sub requested_status {
     my $request = shift;
 
     my $status = 'OPEN';
-    if ($request =~ /^\s*(all|created|open|closed)\s*$/i) {
+    if ($request =~ /^\s*(all|created|open|closed|scheduled)\s*$/i) {
         $status = uc($1);
     }
         
